@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Waker</string>
+
+    <!-- editor -->
+    <string name="editor_cancel_button">Cancel</string>
+    <string name="editor_save_button">Save</string>
+    <string name="editor_alarm_name">Alarm Name</string>
+    <string name="editor_sound">Sound</string>
+    <string name="editor_pick_ringtone">Pick a ringtone</string>
+    <string name="editor_add_time_button">Add time</string>
+    <string name="editor_advanced_settings_button">Advanced Settings</string>
+    <string name="editor_no_ringtone_chosen">No ringtone was chosen</string>
+
+    <!-- generic dialog -->
+    <string name="dialog_permission_required">Permission Required</string>
+
+    <!-- alarm -->
+    <string name="alarm_dismiss">DISMISS</string>
+
+</resources>
