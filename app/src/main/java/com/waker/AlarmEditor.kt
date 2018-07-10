@@ -210,12 +210,14 @@ class AlarmEditor: AppCompatActivity() {
                     Snackbar.make(mAlarmNameEditText, "Alarm Saved", Snackbar.LENGTH_SHORT).show()
                 }
 
-                val groupId = ContentUris.parseId(groupUri)
+                val groupId = ContentUris.parseId(groupUri).toInt()
+                var timeId: Int
 
                 for (time in mTimesList) {
                     timesValues.put(AlarmTimeEntry.COLUMN_GROUP_ID, groupId)
                     timesValues.put(AlarmTimeEntry.COLUMN_TIME, time)
                     timeUri = contentResolver.insert(AlarmTimeEntry.CONTENT_URI, timesValues)
+                    timeId = ContentUris.parseId(timeUri).toInt()
                     timesValues.clear()
 
                     // Set the alarm
@@ -226,10 +228,9 @@ class AlarmEditor: AppCompatActivity() {
                                 set(Calendar.SECOND, 0)
                             }.timeInMillis,
                             PendingIntent.getBroadcast(applicationContext,
-                                    ContentUris.parseId(timeUri).toInt(),
-                                    Intent(applicationContext, AlarmBroadcastReceiver::class.java).apply {
-                                        putExtra("alarmId", ContentUris.parseId(timeUri).toInt())
-                                    },
+                                    timeId,
+                                    Intent(applicationContext, AlarmBroadcastReceiver::class.java).
+                                        putExtra("groupId", groupId),
                                     PendingIntent.FLAG_CANCEL_CURRENT))
 
                     if (timeUri == null) {

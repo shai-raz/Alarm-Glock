@@ -16,8 +16,12 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import cn.pedant.SweetAlert.SweetAlertDialog
+import com.facebook.stetho.Stetho
+import com.waker.R.id.add_group_fab
+import com.waker.R.id.groups_recycler_view
 import com.waker.data.AlarmContract.AlarmGroupEntry
 import kotlinx.android.synthetic.main.activity_main.*
+
 
 private const val MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 1
 
@@ -30,6 +34,8 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        Stetho.initializeWithDefaults(this)
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {

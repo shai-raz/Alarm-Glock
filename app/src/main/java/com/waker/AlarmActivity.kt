@@ -25,8 +25,8 @@ class AlarmActivity: AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.alarm_layout)
 
-        val alarmId = intent!!.getIntExtra("alarmId", 0)
-        Log.i(LOG_TAG, "alarmId: $alarmId")
+        val groupId = intent!!.getIntExtra("groupId", 0)
+        Log.i(LOG_TAG, "groupId: $groupId")
 
         mDismissButton = alarm_dismiss_button
 
@@ -40,7 +40,7 @@ class AlarmActivity: AppCompatActivity() {
         val cursor = contentResolver.query(AlarmGroupEntry.CONTENT_URI,
                 projection,
                 "${AlarmGroupEntry.COLUMN_ID}=?",
-                arrayOf(alarmId.toString()),
+                arrayOf(groupId.toString()),
                 null)
 
         Log.i(LOG_TAG, "Cursor count: ${cursor.count}")
