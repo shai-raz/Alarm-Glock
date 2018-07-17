@@ -3,12 +3,13 @@ package com.waker
 import android.content.ContentValues
 import android.content.Intent
 import android.database.Cursor
+import android.graphics.Color
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.view.ActionMode
+import android.support.v7.widget.CardView
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.SwitchCompat
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.TextView
 import com.waker.data.AlarmContract.AlarmGroupEntry
 import com.waker.data.AlarmContract.AlarmTimeEntry
@@ -17,13 +18,52 @@ import kotlinx.android.synthetic.main.main_group_entry.view.*
 class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor: Cursor?):
         RecyclerView.Adapter<GroupsAdapter.ViewHolder>() {
 
+    private val selectedItems = ArrayList<Int>()
+    private var mMultiSelect = false
+
+    private val actionModeCallbacks: ActionMode.Callback = object: ActionMode.Callback {
+        override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
+            return false
+        }
+
+        override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
+            mMultiSelect = true
+            mContext.menuInflater.inflate(R.menu.menu_main_action, menu)
+            return true
+        }
+
+        override fun onActionItemClicked(mode: ActionMode, menuItem: MenuItem): Boolean {
+            when (menuItem.itemId) {
+                R.id.menu_main_delete -> {
+                    var currentId: Int
+
+                    for (i in selectedItems) {
+                        mCursor!!.moveToPosition(i)
+                        currentId = mCursor!!.getInt(mCursor!!.getColumnIndex(AlarmGroupEntry.COLUMN_ID))
+                        deleteGroup(currentId, i)
+                    }
+
+                    mode.finish()
+                }
+            }
+
+            return false
+        }
+
+        override fun onDestroyActionMode(mode: ActionMode) {
+            mMultiSelect = false
+            clearSelection()
+        }
+
+    }
+
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         // Declare widgets
+        private val groupCardView: CardView = view.group_entry_card_view
         private val groupNameTextView: TextView = view.group_entry_name
         private val groupFirstTimeTextView: TextView = view.group_entry_start_time
         private val groupEndTimeTextView = view.group_entry_end_time
         private val groupSwitch: SwitchCompat = view.group_entry_switch
-        private var isTouched = false
 
         fun update(position: Int) {
             mCursor!!.moveToPosition(position)
@@ -47,14 +87,11 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
             groupNameTextView.text = groupName
             groupSwitch.isChecked = isActive
 
-            /*groupSwitch.setOnTouchListener { view, event ->
-                isTouched = true
-                /*if (event!!.action == MotionEvent.ACTION_DOWN) {
-                    groupSwitch.parent.requestDisallowInterceptTouchEvent(true)
-                }*/
-
-                false
-            }*/
+            if (selectedItems.contains(position)) { // Item is selected
+                groupCardView.setCardBackgroundColor(Color.LTGRAY)
+            } else { // Item isn't selected
+                groupCardView.setCardBackgroundColor(Color.WHITE)
+            }
 
             groupSwitch.setOnCheckedChangeListener { button, isChecked ->
                 if (button.isPressed) {
@@ -81,11 +118,33 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
                 }
             }
 
-            itemView.setOnClickListener { view ->
-                val intent = Intent(mContext, AlarmEditor::class.java)
-                intent.putExtra("groupId", groupId)
+            itemView.setOnLongClickListener { view ->
+                (view.context as AppCompatActivity).startSupportActionMode(actionModeCallbacks)
+                selectItem(position)
+                true
+            }
 
-                mContext.startActivity(intent)
+            itemView.setOnClickListener { view ->
+                if (!mMultiSelect) { // If ActionMode is off
+                    val intent = Intent(mContext, AlarmEditor::class.java)
+                    intent.putExtra("groupId", groupId)
+
+                    mContext.startActivity(intent)
+                } else { // Selecting items
+                    selectItem(position)
+                }
+            }
+        }
+
+        private fun selectItem(position: Int) {
+            if (mMultiSelect) {
+                if (selectedItems.contains(position)) {
+                    selectedItems.remove(position)
+                    groupCardView.setCardBackgroundColor(Color.WHITE)
+                } else {
+                    selectedItems.add(position)
+                    groupCardView.setCardBackgroundColor(Color.LTGRAY)
+                }
             }
         }
     }
@@ -118,11 +177,39 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
         return oldCursor
     }
 
+    /**
+     * Returns a cursor with all times of a group, sorted by time
+     */
     private fun getGroupTimes(groupId: Int): Cursor {
+        val projection = arrayOf(AlarmTimeEntry.COLUMN_TIME)
         return mContext.contentResolver.query(AlarmTimeEntry.CONTENT_URI,
-                arrayOf(AlarmTimeEntry.COLUMN_TIME),
+                projection,
                 "${AlarmTimeEntry.COLUMN_GROUP_ID}=?",
                 arrayOf(groupId.toString()),
                 AlarmTimeEntry.COLUMN_TIME)
+    }
+
+    // ActionMode functions
+
+    fun clearSelection() {
+        selectedItems.clear()
+        notifyDataSetChanged()
+    }
+
+    fun deleteGroup(groupId: Int, position: Int) {
+        // Cancel active alarms
+        AlarmUtils.cancelGroupAlarms(mContext, groupId)
+
+        // Delete all times of the group
+        val deleteAlarmsQuery = mContext.contentResolver.delete(AlarmTimeEntry.CONTENT_URI,
+                "${AlarmTimeEntry.COLUMN_GROUP_ID}=?",
+                arrayOf(groupId.toString()))
+
+        // Delete the group
+        val deleteGroupQuery = mContext.contentResolver.delete(AlarmGroupEntry.CONTENT_URI,
+                "${AlarmGroupEntry.COLUMN_ID}=?",
+                arrayOf(groupId.toString()))
+
+        notifyItemRemoved(position)
     }
 }
