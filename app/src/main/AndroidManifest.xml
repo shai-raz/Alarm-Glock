@@ -23,7 +23,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".AlarmEditor">
+        <activity android:name=".AlarmEditor"
+            android:windowSoftInputMode="adjustPan">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.waker.MainActivity" />

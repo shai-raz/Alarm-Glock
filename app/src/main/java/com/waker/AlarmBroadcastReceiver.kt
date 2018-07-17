@@ -11,8 +11,8 @@ class AlarmBroadcastReceiver: BroadcastReceiver() {
 
         val alarmIntent = Intent(context, AlarmActivity::class.java)
         // Add flags to make the AlarmActivity be independent
-        alarmIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         alarmIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
+        alarmIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         alarmIntent.putExtra("groupId", groupId)
         startActivity(context!!, alarmIntent, null)
         //val notificationManager = context?.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

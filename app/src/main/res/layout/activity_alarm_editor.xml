@@ -6,8 +6,7 @@
     android:layout_height="match_parent"
     android:focusable="true"
     android:focusableInTouchMode="true"
-    android:padding="5dp">
-
+    android:padding="8dp">
 
     <LinearLayout
         android:id="@+id/editor_settings_layout"
@@ -33,7 +32,8 @@
                 android:layout_centerVertical="true"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentLeft="true"
-                android:text="@string/editor_sound" />
+                android:text="@string/editor_sound"
+                style="@style/EditorTextView"/>
             <android.support.v7.widget.SwitchCompat
                 android:id="@+id/editor_sound_switch"
                 android:layout_width="wrap_content"
@@ -44,14 +44,70 @@
         </RelativeLayout>
 
 
-        <TextView
+        <LinearLayout
             android:id="@+id/editor_pick_ringtone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/editor_pick_ringtone"
+            android:orientation="vertical"
+            android:layout_marginTop="@dimen/editor_settings_layout_margin"
             android:clickable="true"
             android:focusable="true"
-            android:layout_marginTop="@dimen/editor_settings_layout_margin"/>
+            android:foreground="?android:attr/selectableItemBackground">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/editor_pick_ringtone"
+                style="@style/EditorTextView"/>
+
+            <TextView
+                android:id="@+id/editor_ringtone_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ringtone Name"
+                style="@style/EditorSubtitle"/>
+        </LinearLayout>
+
+        <!-- Days in week -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/editor_settings_layout_margin">
+            <ToggleButton
+                android:id="@+id/editor_toggle_sunday"
+                style="@style/DayInWeekToggleButton"
+                android:textOn="@string/editor_toggle_sunday"
+                android:textOff="@string/editor_toggle_sunday"/>
+            <ToggleButton
+                android:id="@+id/editor_toggle_monday"
+                style="@style/DayInWeekToggleButton"
+                android:textOn="@string/editor_toggle_monday"
+                android:textOff="@string/editor_toggle_monday"/>
+            <ToggleButton
+                android:id="@+id/editor_toggle_tuesday"
+                style="@style/DayInWeekToggleButton"
+                android:textOn="@string/editor_toggle_tuesday"
+                android:textOff="@string/editor_toggle_tuesday"/>
+            <ToggleButton
+                android:id="@+id/editor_toggle_wednesday"
+                style="@style/DayInWeekToggleButton"
+                android:textOn="@string/editor_toggle_wednesday"
+                android:textOff="@string/editor_toggle_wednesday"/>
+            <ToggleButton
+                android:id="@+id/editor_toggle_thursday"
+                style="@style/DayInWeekToggleButton"
+                android:textOn="@string/editor_toggle_thursday"
+                android:textOff="@string/editor_toggle_thursday"/>
+            <ToggleButton
+                android:id="@+id/editor_toggle_friday"
+                style="@style/DayInWeekToggleButton"
+                android:textOn="@string/editor_toggle_friday"
+                android:textOff="@string/editor_toggle_friday"/>
+            <ToggleButton
+                android:id="@+id/editor_toggle_saturday"
+                style="@style/DayInWeekToggleButton"
+                android:textOn="@string/editor_toggle_saturday"
+                android:textOff="@string/editor_toggle_saturday"/>
+        </LinearLayout>
 
         <Button
             android:id="@+id/editor_advanced_settings_button"

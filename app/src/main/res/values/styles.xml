@@ -8,4 +8,28 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="EditorTextView">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/BodyTextView</item>
+    </style>
+
+    <style name="EditorSubtitle">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/SubtitleTextView</item>
+        <item name="android:alpha">.7</item>
+    </style>
+
+
+    <!-- Style for Days in week ToggleButton -->
+    <style name="DayInWeekToggleButton">
+        <item name="android:background">@drawable/round_toggle_button</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/BodyTextView</item>
+        <item name="android:alpha">.7</item>
+    </style>
+
 </resources>

@@ -49,7 +49,7 @@ class AlarmActivity: AppCompatActivity() {
             Log.i(LOG_TAG, "Ringtone URI: ${cursor.getString(cursor.getColumnIndex(AlarmGroupEntry.COLUMN_RINGTONE_URI))}")
             val maxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
             Log.i(LOG_TAG, "maxVolume: $maxVolume")
-            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume, AudioManager.FLAG_SHOW_UI)
+            //mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume, AudioManager.FLAG_SHOW_UI)
             mMediaPlayer = MediaPlayer.create(this, Uri.parse(cursor.getString(cursor.getColumnIndex(AlarmGroupEntry.COLUMN_RINGTONE_URI))))
             mMediaPlayer!!.start()
         }

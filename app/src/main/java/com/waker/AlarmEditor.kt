@@ -1,7 +1,6 @@
 package com.waker
 
 import android.app.AlarmManager
-import android.app.PendingIntent
 import android.app.TimePickerDialog
 import android.content.ContentUris
 import android.content.ContentValues
@@ -10,6 +9,7 @@ import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
@@ -19,16 +19,12 @@ import android.support.v7.widget.helper.ItemTouchHelper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import com.waker.data.AlarmContract
 import com.waker.data.AlarmContract.AlarmGroupEntry
 import com.waker.data.AlarmContract.AlarmTimeEntry
 import kotlinx.android.synthetic.main.activity_alarm_editor.*
 import kotlinx.android.synthetic.main.editor_times_entry.view.*
-import java.util.*
 
 
 const val SELECT_RINGTONE = 1
@@ -40,29 +36,48 @@ class AlarmEditor: AppCompatActivity() {
 
     private lateinit var mAlarmNameEditText: EditText
     private lateinit var mSoundSwitch: SwitchCompat
-    private lateinit var mPickRingtoneButton: TextView
+    private lateinit var mPickRingtoneButton: LinearLayout
+    private lateinit var mPickRingtoneTextView: TextView
+    private lateinit var mDaysInWeekToggle: Array<ToggleButton>
+    private lateinit var mAdvancedButton: Button
     private lateinit var mTimesRecyclerView: RecyclerView
     private lateinit var mAddTimeButton: Button
     private lateinit var mCancelButton: Button
     private lateinit var mSaveButton: Button
 
+    private lateinit var mAlarmManager: AlarmManager
     private lateinit var mTimesAdapter: TimesAdapter
+
     private var mEditMode = false
     private val mTimesList = mutableListOf<Int>()
     private var mGroupId: Int = 0
     private var ringtoneUri: Uri? = Uri.EMPTY
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_alarm_editor)
 
+        mAlarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        // Widgets
         mAlarmNameEditText = editor_name_edit_text
         mSoundSwitch = editor_sound_switch
         mPickRingtoneButton = editor_pick_ringtone
+        mPickRingtoneTextView = editor_ringtone_text_view
+        mAdvancedButton = editor_advanced_settings_button
         mTimesRecyclerView = editor_times_recycler_view
         mAddTimeButton = editor_add_time_button
         mCancelButton = editor_cancel_button
         mSaveButton = editor_save_button
+
+        mDaysInWeekToggle = arrayOf(editor_toggle_sunday,
+                editor_toggle_monday,
+                editor_toggle_tuesday,
+                editor_toggle_wednesday,
+                editor_toggle_thursday,
+                editor_toggle_friday,
+                editor_toggle_saturday)
 
         mAddTimeButton.setOnClickListener {
             addTime()
@@ -131,7 +146,9 @@ class AlarmEditor: AppCompatActivity() {
             mGroupId = intent.getIntExtra("groupId", 0)
 
             val projection = arrayOf(AlarmGroupEntry.COLUMN_NAME,
-                    AlarmGroupEntry.COLUMN_SOUND)
+                    AlarmGroupEntry.COLUMN_SOUND,
+                    AlarmGroupEntry.COLUMN_RINGTONE_URI,
+                    AlarmGroupEntry.COLUMN_DAYS_IN_WEEK)
             val groupCursor = contentResolver.query(AlarmGroupEntry.CONTENT_URI,
                     projection,
                     "${AlarmGroupEntry.COLUMN_ID}=?",
@@ -156,6 +173,15 @@ class AlarmEditor: AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (resultCode == RESULT_OK && requestCode == SELECT_RINGTONE) {
             ringtoneUri = data!!.data
+
+            val ringtoneCursor = contentResolver.query(
+                    ringtoneUri,
+                    arrayOf(MediaStore.Audio.Media.TITLE),
+                    null, null, null)
+            if(ringtoneCursor.moveToFirst()) {
+                mPickRingtoneTextView.text = ringtoneCursor.getString(ringtoneCursor.getColumnIndex(MediaStore.MediaColumns.TITLE))
+            }
+            ringtoneCursor.close()
         } else {
             Toast.makeText(this, getString(R.string.editor_no_ringtone_chosen), Toast.LENGTH_SHORT).show()
         }
@@ -165,6 +191,27 @@ class AlarmEditor: AppCompatActivity() {
         if (groupCursor!!.moveToFirst()) {
             mAlarmNameEditText.setText(groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_NAME)), TextView.BufferType.EDITABLE)
             mSoundSwitch.isChecked = groupCursor.getInt(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_SOUND)) == 1
+
+            ringtoneUri = Uri.parse(groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_RINGTONE_URI)))
+            val ringtoneCursor = contentResolver.query(
+                    ringtoneUri,
+                    arrayOf(MediaStore.Audio.Media.TITLE),
+                    null, null, null)
+            if(ringtoneCursor.moveToFirst()) {
+                mPickRingtoneTextView.text = ringtoneCursor.getString(ringtoneCursor.getColumnIndex(MediaStore.MediaColumns.TITLE))
+            }
+            ringtoneCursor.close()
+
+            var daysInWeek = groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK))
+            daysInWeek = daysInWeek.replace("[","")
+            daysInWeek = daysInWeek.replace("]","")
+            daysInWeek = daysInWeek.replace("\\s+","")
+            val daysInWeekArray = daysInWeek.split(",")
+
+            for (i in 0 until mDaysInWeekToggle.size) {
+                mDaysInWeekToggle[i].isChecked = daysInWeekArray[i].trim().toInt() == 1
+            }
+
         }
 
         while(timesCursor!!.moveToNext()) {
@@ -185,7 +232,6 @@ class AlarmEditor: AppCompatActivity() {
         val alarmName = mAlarmNameEditText.text.toString().trim()
         val isSound = if (mSoundSwitch.isChecked) 1 else 0
 
-
         if (ringtoneUri != Uri.EMPTY) {
             val groupValues = ContentValues()
             groupValues.put(AlarmGroupEntry.COLUMN_NAME, alarmName)
@@ -193,10 +239,15 @@ class AlarmEditor: AppCompatActivity() {
             groupValues.put(AlarmGroupEntry.COLUMN_SOUND, isSound)
             groupValues.put(AlarmGroupEntry.COLUMN_RINGTONE_URI, ringtoneUri.toString())
 
+            val daysInWeek: MutableList<Int> = mutableListOf()
+            for (i in 0 until mDaysInWeekToggle.size) {
+                daysInWeek.add(i, if(mDaysInWeekToggle[i].isChecked) 1 else 0)
+            }
+            groupValues.put(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK, daysInWeek.toString())
+
             val timesValues = ContentValues()
             var timeUri: Uri
-
-            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            var timeId: Int
 
             if (!mEditMode) { // Creating a new Alarm (Insert)
                 val groupUri = contentResolver.insert(AlarmGroupEntry.CONTENT_URI, groupValues)
@@ -211,7 +262,6 @@ class AlarmEditor: AppCompatActivity() {
                 }
 
                 val groupId = ContentUris.parseId(groupUri).toInt()
-                var timeId: Int
 
                 for (time in mTimesList) {
                     timesValues.put(AlarmTimeEntry.COLUMN_GROUP_ID, groupId)
@@ -220,18 +270,8 @@ class AlarmEditor: AppCompatActivity() {
                     timeId = ContentUris.parseId(timeUri).toInt()
                     timesValues.clear()
 
-                    // Set the alarm
-                    alarmManager.set(AlarmManager.RTC_WAKEUP,
-                            Calendar.getInstance().apply {
-                                set(Calendar.HOUR_OF_DAY, minutesInDayToHours(time).toInt())
-                                set(Calendar.MINUTE, minutesInDayToMinutes(time).toInt())
-                                set(Calendar.SECOND, 0)
-                            }.timeInMillis,
-                            PendingIntent.getBroadcast(applicationContext,
-                                    timeId,
-                                    Intent(applicationContext, AlarmBroadcastReceiver::class.java).
-                                        putExtra("groupId", groupId),
-                                    PendingIntent.FLAG_CANCEL_CURRENT))
+                    AlarmUtils.setAlarm(this, time, timeId, groupId, mAlarmManager)
+                    //setAlarm(time, timeId, groupId)
 
                     if (timeUri == null) {
                         // If the new content URI is null, then there was an error with insertion.
@@ -253,6 +293,9 @@ class AlarmEditor: AppCompatActivity() {
                     Snackbar.make(mAlarmNameEditText, "Time Saved", Snackbar.LENGTH_SHORT).show()
                 }
 
+                AlarmUtils.cancelGroupAlarms(this, mGroupId)
+                //cancelGroupAlarms(mGroupId)
+
                 // Delete all existing times, and insert them anew
                 contentResolver.delete(AlarmTimeEntry.CONTENT_URI,
                         "${AlarmTimeEntry.COLUMN_GROUP_ID}=?",
@@ -262,7 +305,11 @@ class AlarmEditor: AppCompatActivity() {
                     timesValues.put(AlarmContract.AlarmTimeEntry.COLUMN_GROUP_ID, mGroupId)
                     timesValues.put(AlarmContract.AlarmTimeEntry.COLUMN_TIME, time)
                     timeUri = contentResolver.insert(AlarmContract.AlarmTimeEntry.CONTENT_URI, timesValues)
+                    timeId = ContentUris.parseId(timeUri).toInt()
                     timesValues.clear()
+
+                    AlarmUtils.setAlarm(this, time, timeId, mGroupId, mAlarmManager)
+                    //setAlarm(time, timeId, mGroupId)
 
                     if (timeUri == null) {
                         // If the new content URI is null, then there was an error with insertion.
@@ -273,21 +320,6 @@ class AlarmEditor: AppCompatActivity() {
                     }
                 }
             }
-
-
-            /*alarmManager.set(AlarmManager.RTC_WAKEUP,
-                    Calendar.getInstance().apply {
-                        set(Calendar.HOUR_OF_DAY, minutesInDayToHours(mTimesList[0]).toInt())
-                        set(Calendar.MINUTE, minutesInDayToMinutes(mTimesList[0]).toInt())
-                        set(Calendar.SECOND, 0)
-                    }.timeInMillis,
-                    PendingIntent.getBroadcast(applicationContext,
-                            0,
-                            Intent(applicationContext, AlarmBroadcastReceiver::class.java).apply {
-                                putExtra("notificationId", 1)
-                            },
-                            PendingIntent.FLAG_CANCEL_CURRENT))
-            Toast.makeText(applicationContext, "Set for ${minutesInDayToHours(mTimesList[0]).toInt()}:${minutesInDayToMinutes(mTimesList[0]).toInt()}", Toast.LENGTH_SHORT).show()*/
 
             finish()
         } else { // If ringtone wasn't selected
@@ -302,15 +334,15 @@ class AlarmEditor: AppCompatActivity() {
             private val timeTextView: TextView = view.editor_times_list_view_text_view
 
             fun update(position: Int) {
-                timeTextView.text = minutesInDayTo24(list[position])
+                timeTextView.text = AlarmUtils.minutesInDayTo24(list[position])
 
                 itemView.setOnClickListener { view ->
                     val timePickerDialog = TimePickerDialog(mContext,
                             TimePickerDialog.OnTimeSetListener { timePicker, selectedHour, selectedMin ->
-                                mTimesList[position] = getMinutesInDay(selectedHour, selectedMin)
+                                mTimesList[position] = AlarmUtils.getMinutesInDay(selectedHour, selectedMin)
                                 mTimesAdapter.notifyItemChanged(position) },
-                            minutesInDayToHours(mTimesList[position]).toInt(),
-                            minutesInDayToMinutes(mTimesList[position]).toInt(),
+                            AlarmUtils.minutesInDayToHours(mTimesList[position]).toInt(),
+                            AlarmUtils.minutesInDayToMinutes(mTimesList[position]).toInt(),
                             true)
                     timePickerDialog.show()
                 }
@@ -333,33 +365,49 @@ class AlarmEditor: AppCompatActivity() {
     }
 
 
-    /**
-     * Converts minutes in day to HH:mm format
-     */
-    fun minutesInDayTo24(time: Int): String {
-        return "${minutesInDayToHours(time)}:${minutesInDayToMinutes(time)}"
-    }
+    /*private fun setAlarm(time: Int, timeId: Int, groupId: Int) {
+        val now = Calendar.getInstance()
 
-    private fun minutesInDayToHours(time: Int): String {
-        var hours = (time / 60).toString()
-        if (hours.length == 1) {
-            hours = "0$hours"
+        val alarmTime = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, minutesInDayToHours(time).toInt())
+            set(Calendar.MINUTE, minutesInDayToMinutes(time).toInt())
+            set(Calendar.SECOND, 0)
         }
 
-        return hours
-    }
-
-    private fun minutesInDayToMinutes(time: Int): String {
-        var minutes = (time % 60).toString()
-        if (minutes.length == 1) {
-            minutes = "0$minutes"
+        if (alarmTime.before(now)) {
+            alarmTime.add(Calendar.DAY_OF_MONTH, 1)
+            Toast.makeText(this, "Alarm set for tomorrow", Toast.LENGTH_SHORT).show()
         }
 
-        return minutes
+        mAlarmManager.set(AlarmManager.RTC_WAKEUP,
+                alarmTime.timeInMillis,
+                PendingIntent.getBroadcast(applicationContext,
+                        timeId,
+                        Intent(applicationContext, AlarmBroadcastReceiver::class.java).
+                                putExtra("groupId", groupId),
+                        PendingIntent.FLAG_CANCEL_CURRENT))
     }
 
-    private fun getMinutesInDay(hours: Int, minutes: Int): Int {
-        return hours * 60 + minutes
+    private fun cancelGroupAlarms(groupId: Int) {
+        val projection = arrayOf(AlarmTimeEntry.COLUMN_ID)
+        val alarmCursor = contentResolver.query(AlarmTimeEntry.CONTENT_URI,
+                projection,
+                "${AlarmTimeEntry.COLUMN_GROUP_ID}=?",
+                arrayOf(groupId.toString()),
+                null)
+
+        while(alarmCursor.moveToNext()) {
+            cancelAlarm(alarmCursor.getInt(alarmCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID)))
+        }
+
+        alarmCursor.close()
+
     }
 
+    private fun cancelAlarm(timeId: Int) {
+        mAlarmManager.cancel(PendingIntent.getBroadcast(applicationContext,
+                timeId,
+                Intent(applicationContext, AlarmBroadcastReceiver::class.java),
+                PendingIntent.FLAG_CANCEL_CURRENT))
+    }*/
 }

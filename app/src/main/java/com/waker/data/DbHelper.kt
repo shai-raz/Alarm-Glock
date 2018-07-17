@@ -19,7 +19,8 @@ class DbHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, null,
                         "${AlarmGroupEntry.COLUMN_NAME} TEXT," +
                         "${AlarmGroupEntry.COLUMN_ACTIVE} INTEGER," +
                         "${AlarmGroupEntry.COLUMN_SOUND} INTEGER," +
-                        "${AlarmGroupEntry.COLUMN_RINGTONE_URI} TEXT)"
+                        "${AlarmGroupEntry.COLUMN_RINGTONE_URI} TEXT," +
+                        "${AlarmGroupEntry.COLUMN_DAYS_IN_WEEK} VARCHAR(15) DEFAULT [0,0,0,0,0,0,0])"
 
         private const val SQL_CREATE_TIME_ENTRIES =
                 "CREATE TABLE ${AlarmTimeEntry.TABLE_NAME} " +

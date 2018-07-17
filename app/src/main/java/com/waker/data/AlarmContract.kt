@@ -25,6 +25,7 @@ object AlarmContract {
             const val COLUMN_ACTIVE = "active"
             const val COLUMN_SOUND = "sound"
             const val COLUMN_RINGTONE_URI = "ringtone_uri"
+            const val COLUMN_DAYS_IN_WEEK = "days_in_week"
         }
 
     }

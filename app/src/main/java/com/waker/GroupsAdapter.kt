@@ -36,29 +36,29 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
 
             if (groupTimes.moveToFirst()) {
                 val groupFirstTime = groupTimes.getInt(groupTimes.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
-                groupFirstTimeTextView.text = minutesInDayTo24(groupFirstTime)
+                groupFirstTimeTextView.text = AlarmUtils.minutesInDayTo24(groupFirstTime)
             }
             if (groupTimes.moveToLast()) {
                 val groupEndTime = groupTimes.getInt(groupTimes.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
-                groupEndTimeTextView.text = minutesInDayTo24(groupEndTime)
+                groupEndTimeTextView.text = AlarmUtils.minutesInDayTo24(groupEndTime)
             }
 
             // Populate widgets with values
             groupNameTextView.text = groupName
             groupSwitch.isChecked = isActive
 
-            groupSwitch.setOnTouchListener { view, event ->
+            /*groupSwitch.setOnTouchListener { view, event ->
                 isTouched = true
                 /*if (event!!.action == MotionEvent.ACTION_DOWN) {
                     groupSwitch.parent.requestDisallowInterceptTouchEvent(true)
                 }*/
 
                 false
-            }
+            }*/
 
             groupSwitch.setOnCheckedChangeListener { button, isChecked ->
-                if (isTouched) {
-                    isTouched = false
+                if (button.isPressed) {
+                    //isTouched = false
                     val values = ContentValues()
                     values.put(AlarmGroupEntry.COLUMN_ACTIVE, isChecked)
                     val rowsAffected = mContext.contentResolver.update(AlarmGroupEntry.CONTENT_URI,
@@ -66,12 +66,18 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
                             "${AlarmGroupEntry.COLUMN_ID}=?",
                             arrayOf(groupId.toString()))
                     /*if (rowsAffected == 0) {
-                    // If the new content URI is null, then there was an error with insertion.
-                    Snackbar.make(itemView, "Error", Snackbar.LENGTH_SHORT).show()
-                } else {
-                    // Otherwise, the insertion was successful and we can display a toast.
-                    Snackbar.make(itemView, "Saved", Snackbar.LENGTH_SHORT).show()
-                }*/
+                        // If the new content URI is null, then there was an error with insertion.
+                        Snackbar.make(itemView, "Error", Snackbar.LENGTH_SHORT).show()
+                    } else {
+                        // Otherwise, the insertion was successful and we can display a toast.
+                        Snackbar.make(itemView, "Saved", Snackbar.LENGTH_SHORT).show()
+                    }*/
+
+                    if (isChecked) {
+                        AlarmUtils.setGroupAlarms(mContext, groupId)
+                    } else {
+                        AlarmUtils.cancelGroupAlarms(mContext, groupId)
+                    }
                 }
             }
 
@@ -119,116 +125,4 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
                 arrayOf(groupId.toString()),
                 AlarmTimeEntry.COLUMN_TIME)
     }
-
-    /**
-     * Converts minutes in day to HH:mm format
-     */
-    private fun minutesInDayTo24(time: Int): String {
-        var hours = (time / 60).toString()
-        if (hours.length == 1) {
-            hours = "0$hours"
-        }
-
-        var minutes = (time % 60).toString()
-        if (minutes.length == 1) {
-            minutes = "0$minutes"
-        }
-
-        return "$hours:$minutes"
-    }
 }
-
-/*class GroupsAdapter(private val mContext: Context, private var mCursor: Cursor?): CursorAdapter(mContext, mCursor, CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER) {
-
-
-    override fun newView(context: Context?, cursor: Cursor?, parent: ViewGroup?): View {
-        return LayoutInflater.from(context).inflate(R.layout.main_group_entry, parent, false)
-    }
-
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-        val view = super.getView(position, convertView, parent)//let the adapter handle setting up the row views
-        view.setBackgroundColor(ContextCompat.getColor(mContext, android.R.color.background_light)) //default color
-
-        /*if (mSelection.get(position) != null) {
-            view.setBackgroundColor(ContextCompat.getColor(mContext, android.R.color.holo_blue_light))// this is a selected position so make it red
-        }*/
-
-        return view
-    }
-
-    override fun bindView(view: View?, context: Context, cursor: Cursor?) {
-        // Declare Widgets
-        val groupNameTV: TextView = view!!.findViewById(R.id.group_entry_name)
-        val groupFirstTimeTv: TextView = view.findViewById(R.id.group_entry_start_time)
-        val groupEndTimeTv: TextView = view.findViewById(R.id.group_entry_end_time)
-        val groupSwitch: SwitchCompat = view.findViewById(R.id.group_entry_switch)
-
-        // Get values from Cursors
-        val groupId = cursor!!.getInt(cursor.getColumnIndex(AlarmGroupEntry.COLUMN_ID))
-        val groupName = cursor.getString(cursor.getColumnIndex(AlarmGroupEntry.COLUMN_NAME))
-        val isActive = cursor.getInt(cursor.getColumnIndex(AlarmGroupEntry.COLUMN_ACTIVE)) != 0
-
-        val groupTimes = getGroupTimes(groupId)
-        //Toast.makeText(mContext, "Number of times: ${groupTimes.count}", Toast.LENGTH_SHORT).show()
-        if (groupTimes.moveToFirst()) {
-            val groupFirstTime = groupTimes.getInt(groupTimes.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
-            groupFirstTimeTv.text = minutesInDayTo24(groupFirstTime)
-        }
-        if (groupTimes.moveToLast()) {
-            val groupEndTime = groupTimes.getInt(groupTimes.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
-            groupEndTimeTv.text = minutesInDayTo24(groupEndTime)
-        }
-
-        // Populate widgets with values
-        groupNameTV.text = groupName
-        groupSwitch.isChecked = isActive
-
-        groupSwitch.setOnCheckedChangeListener(object: CompoundButton.OnCheckedChangeListener {
-            override fun onCheckedChanged(button: CompoundButton?, isChecked: Boolean) {
-                val values = ContentValues()
-                values.put(AlarmGroupEntry.COLUMN_ACTIVE, isChecked)
-                context.contentResolver.update(AlarmGroupEntry.CONTENT_URI,
-                        values,
-                        "${AlarmGroupEntry.COLUMN_ID}=?",
-                        arrayOf(groupId.toString()))
-
-                /*if (rowsAffected == 0) {
-                    // If the new content URI is null, then there was an error with insertion.
-                    Snackbar.make(view, "Error", Snackbar.LENGTH_SHORT).show()
-                } else {
-                    // Otherwise, the insertion was successful and we can display a toast.
-                    Snackbar.make(view, "Saved", Snackbar.LENGTH_SHORT).show()
-                }*/
-
-            }
-
-        })
-
-    }
-
-    private fun getGroupTimes(groupId: Int): Cursor {
-        return mContext.contentResolver.query(AlarmTimeEntry.CONTENT_URI,
-                arrayOf(AlarmTimeEntry.COLUMN_TIME),
-                "${AlarmTimeEntry.COLUMN_GROUP_ID}=?",
-                arrayOf(groupId.toString()),
-                AlarmTimeEntry.COLUMN_TIME)
-    }
-
-    /**
-     * Converts minutes in day to HH:mm format
-     */
-    fun minutesInDayTo24(time: Int): String {
-        var hours = (time / 60).toString()
-        if (hours.length == 1) {
-            hours = "0$hours"
-        }
-
-        var minutes = (time % 60).toString()
-        if (minutes.length == 1) {
-            minutes = "0$minutes"
-        }
-
-        return "$hours:$minutes"
-    }
-
-}*/
