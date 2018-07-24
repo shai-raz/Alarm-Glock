@@ -38,7 +38,7 @@ class AlarmEditor: AppCompatActivity() {
     private lateinit var mSoundSwitch: SwitchCompat
     private lateinit var mPickRingtoneButton: LinearLayout
     private lateinit var mPickRingtoneTextView: TextView
-    private lateinit var mDaysInWeekToggle: Array<ToggleButton>
+    private lateinit var mDaysOfWeekToggle: Array<ToggleButton>
     private lateinit var mAdvancedButton: Button
     private lateinit var mTimesRecyclerView: RecyclerView
     private lateinit var mAddTimeButton: Button
@@ -71,7 +71,7 @@ class AlarmEditor: AppCompatActivity() {
         mCancelButton = editor_cancel_button
         mSaveButton = editor_save_button
 
-        mDaysInWeekToggle = arrayOf(editor_toggle_sunday,
+        mDaysOfWeekToggle = arrayOf(editor_toggle_sunday,
                 editor_toggle_monday,
                 editor_toggle_tuesday,
                 editor_toggle_wednesday,
@@ -202,14 +202,14 @@ class AlarmEditor: AppCompatActivity() {
             }
             ringtoneCursor.close()
 
-            var daysInWeek = groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK))
-            daysInWeek = daysInWeek.replace("[","")
-            daysInWeek = daysInWeek.replace("]","")
-            daysInWeek = daysInWeek.replace("\\s+","")
-            val daysInWeekArray = daysInWeek.split(",")
+            var daysOfWeek = groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK))
+            daysOfWeek = daysOfWeek.replace("[","")
+            daysOfWeek = daysOfWeek.replace("]","")
+            daysOfWeek = daysOfWeek.replace("\\s+","")
+            val daysOfWeekArray = daysOfWeek.split(",")
 
-            for (i in 0 until mDaysInWeekToggle.size) {
-                mDaysInWeekToggle[i].isChecked = daysInWeekArray[i].trim().toInt() == 1
+            for (i in 0 until mDaysOfWeekToggle.size) {
+                mDaysOfWeekToggle[i].isChecked = daysOfWeekArray[i].trim().toInt() == 1
             }
 
         }
@@ -239,11 +239,11 @@ class AlarmEditor: AppCompatActivity() {
             groupValues.put(AlarmGroupEntry.COLUMN_SOUND, isSound)
             groupValues.put(AlarmGroupEntry.COLUMN_RINGTONE_URI, ringtoneUri.toString())
 
-            val daysInWeek: MutableList<Int> = mutableListOf()
-            for (i in 0 until mDaysInWeekToggle.size) {
-                daysInWeek.add(i, if(mDaysInWeekToggle[i].isChecked) 1 else 0)
+            val daysOfWeek: MutableList<Int> = mutableListOf()
+            for (i in 0 until mDaysOfWeekToggle.size) {
+                daysOfWeek.add(i, if(mDaysOfWeekToggle[i].isChecked) 1 else 0)
             }
-            groupValues.put(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK, daysInWeek.toString())
+            groupValues.put(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK, daysOfWeek.toString())
 
             val timesValues = ContentValues()
             var timeUri: Uri
@@ -251,7 +251,6 @@ class AlarmEditor: AppCompatActivity() {
 
             if (!mEditMode) { // Creating a new Alarm (Insert)
                 val groupUri = contentResolver.insert(AlarmGroupEntry.CONTENT_URI, groupValues)
-                //val timesUri = contentResolver.insert(AlarmGroupEntry.CONTENT_URI, timesValues)
 
                 if (groupUri == null) {
                     // If the new content URI is null, then there was an error with insertion.
@@ -270,8 +269,7 @@ class AlarmEditor: AppCompatActivity() {
                     timeId = ContentUris.parseId(timeUri).toInt()
                     timesValues.clear()
 
-                    AlarmUtils.setAlarm(this, time, timeId, groupId, mAlarmManager)
-                    //setAlarm(time, timeId, groupId)
+                    AlarmUtils.setAlarm(this, time, timeId, groupId, daysOfWeek, mAlarmManager)
 
                     if (timeUri == null) {
                         // If the new content URI is null, then there was an error with insertion.
@@ -294,7 +292,6 @@ class AlarmEditor: AppCompatActivity() {
                 }
 
                 AlarmUtils.cancelGroupAlarms(this, mGroupId)
-                //cancelGroupAlarms(mGroupId)
 
                 // Delete all existing times, and insert them anew
                 contentResolver.delete(AlarmTimeEntry.CONTENT_URI,
@@ -308,8 +305,7 @@ class AlarmEditor: AppCompatActivity() {
                     timeId = ContentUris.parseId(timeUri).toInt()
                     timesValues.clear()
 
-                    AlarmUtils.setAlarm(this, time, timeId, mGroupId, mAlarmManager)
-                    //setAlarm(time, timeId, mGroupId)
+                    AlarmUtils.setAlarm(this, time, timeId, mGroupId, daysOfWeek, mAlarmManager)
 
                     if (timeUri == null) {
                         // If the new content URI is null, then there was an error with insertion.
@@ -363,51 +359,4 @@ class AlarmEditor: AppCompatActivity() {
         }
 
     }
-
-
-    /*private fun setAlarm(time: Int, timeId: Int, groupId: Int) {
-        val now = Calendar.getInstance()
-
-        val alarmTime = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, minutesInDayToHours(time).toInt())
-            set(Calendar.MINUTE, minutesInDayToMinutes(time).toInt())
-            set(Calendar.SECOND, 0)
-        }
-
-        if (alarmTime.before(now)) {
-            alarmTime.add(Calendar.DAY_OF_MONTH, 1)
-            Toast.makeText(this, "Alarm set for tomorrow", Toast.LENGTH_SHORT).show()
-        }
-
-        mAlarmManager.set(AlarmManager.RTC_WAKEUP,
-                alarmTime.timeInMillis,
-                PendingIntent.getBroadcast(applicationContext,
-                        timeId,
-                        Intent(applicationContext, AlarmBroadcastReceiver::class.java).
-                                putExtra("groupId", groupId),
-                        PendingIntent.FLAG_CANCEL_CURRENT))
-    }
-
-    private fun cancelGroupAlarms(groupId: Int) {
-        val projection = arrayOf(AlarmTimeEntry.COLUMN_ID)
-        val alarmCursor = contentResolver.query(AlarmTimeEntry.CONTENT_URI,
-                projection,
-                "${AlarmTimeEntry.COLUMN_GROUP_ID}=?",
-                arrayOf(groupId.toString()),
-                null)
-
-        while(alarmCursor.moveToNext()) {
-            cancelAlarm(alarmCursor.getInt(alarmCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID)))
-        }
-
-        alarmCursor.close()
-
-    }
-
-    private fun cancelAlarm(timeId: Int) {
-        mAlarmManager.cancel(PendingIntent.getBroadcast(applicationContext,
-                timeId,
-                Intent(applicationContext, AlarmBroadcastReceiver::class.java),
-                PendingIntent.FLAG_CANCEL_CURRENT))
-    }*/
 }

@@ -17,8 +17,6 @@ import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import cn.pedant.SweetAlert.SweetAlertDialog
 import com.facebook.stetho.Stetho
-import com.waker.R.id.add_group_fab
-import com.waker.R.id.groups_recycler_view
 import com.waker.data.AlarmContract.AlarmGroupEntry
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -49,6 +47,21 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
             }
             dialog.show()
         }
+
+        /*
+        @@ PendingIntent TEST @@
+        val content = mutableListOf<String>()
+        var isExist: Boolean
+        for (i in 0 .. 20) {
+            isExist = (PendingIntent.getBroadcast(applicationContext,
+                    i,
+                    Intent(applicationContext, AlarmBroadcastReceiver::class.java),
+                    PendingIntent.FLAG_NO_CREATE) != null)
+            content.add(i, isExist.toString())
+        }*/
+        /*SweetAlertDialog(this, SweetAlertDialog.NORMAL_TYPE)
+                .setContentText(AlarmUtils.isRepeating(listOf(0,0,0,0,0,1,0)).toString())
+                .show()*/
 
         mGroupsRecyclerView = groups_recycler_view
         mFab = add_group_fab

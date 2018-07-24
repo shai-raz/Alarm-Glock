@@ -1,6 +1,10 @@
 package com.waker
 
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
@@ -10,7 +14,9 @@ import android.util.Log
 import android.view.WindowManager
 import android.widget.Button
 import com.waker.data.AlarmContract.AlarmGroupEntry
+import com.waker.data.AlarmContract.AlarmTimeEntry
 import kotlinx.android.synthetic.main.alarm_layout.*
+import java.util.*
 
 
 class AlarmActivity: AppCompatActivity() {
@@ -18,51 +24,79 @@ class AlarmActivity: AppCompatActivity() {
     private val LOG_TAG = this.javaClass.simpleName!!
 
     private lateinit var mDismissButton: Button
-    private var mMediaPlayer: MediaPlayer? = null
     private lateinit var mAudioManager: AudioManager
+    private var mMediaPlayer: MediaPlayer? = null
+
+    private var mGroupId = 0
+    private var mTimeId = 0
+    private var mIsRepeating = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.alarm_layout)
 
-        val groupId = intent!!.getIntExtra("groupId", 0)
-        Log.i(LOG_TAG, "groupId: $groupId")
+        mGroupId = intent!!.getIntExtra("groupId", 0)
+        mTimeId = intent!!.getIntExtra("timeId", 0)
+        Log.i(LOG_TAG, "groupId: $mGroupId, timeId: $mTimeId")
 
         mDismissButton = alarm_dismiss_button
 
         mAudioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val currentVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
 
-        val projection = arrayOf(AlarmGroupEntry.COLUMN_NAME,
+        val groupProjection = arrayOf(AlarmGroupEntry.COLUMN_NAME,
                 AlarmGroupEntry.COLUMN_SOUND,
-                AlarmGroupEntry.COLUMN_RINGTONE_URI)
+                AlarmGroupEntry.COLUMN_RINGTONE_URI,
+                AlarmGroupEntry.COLUMN_DAYS_IN_WEEK)
 
-        val cursor = contentResolver.query(AlarmGroupEntry.CONTENT_URI,
-                projection,
+        val groupCursor = contentResolver.query(AlarmGroupEntry.CONTENT_URI,
+                groupProjection,
                 "${AlarmGroupEntry.COLUMN_ID}=?",
-                arrayOf(groupId.toString()),
+                arrayOf(mGroupId.toString()),
                 null)
 
-        Log.i(LOG_TAG, "Cursor count: ${cursor.count}")
-
-        if(cursor.moveToFirst()) {
-            Log.i(LOG_TAG, "Ringtone URI: ${cursor.getString(cursor.getColumnIndex(AlarmGroupEntry.COLUMN_RINGTONE_URI))}")
+        if(groupCursor.moveToFirst()) {
+            Log.i(LOG_TAG, "Ringtone URI: ${groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_RINGTONE_URI))}")
             val maxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
             Log.i(LOG_TAG, "maxVolume: $maxVolume")
             //mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume, AudioManager.FLAG_SHOW_UI)
-            mMediaPlayer = MediaPlayer.create(this, Uri.parse(cursor.getString(cursor.getColumnIndex(AlarmGroupEntry.COLUMN_RINGTONE_URI))))
+            mMediaPlayer = MediaPlayer.create(this, Uri.parse(groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_RINGTONE_URI))))
             mMediaPlayer!!.start()
+
+            val daysOfWeekString = groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK))
+            val daysOfWeek = AlarmUtils.getDOWArray(daysOfWeekString)
+            if (AlarmUtils.isRepeating(daysOfWeek)) { // If the alarm is set to repeat, set the next week's Alarm
+                mIsRepeating = true
+
+                val timeProjection = arrayOf(AlarmTimeEntry.COLUMN_ID,
+                        AlarmTimeEntry.COLUMN_TIME)
+
+                val timeCursor = contentResolver.query(AlarmTimeEntry.CONTENT_URI,
+                        timeProjection,
+                        "${AlarmTimeEntry.COLUMN_GROUP_ID}=?",
+                        arrayOf(mGroupId.toString()),
+                        null)
+
+                val time = timeCursor.getInt(timeCursor.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
+                val timeId = timeCursor.getInt(timeCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID))
+                val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val currentDayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+
+                AlarmUtils.setAlarmForDayInWeek(applicationContext,
+                        time,
+                        timeId,
+                        mGroupId,
+                        currentDayOfWeek,
+                        alarmManager)
+
+                timeCursor.close()
+            }
         }
 
-        cursor.close()
+        groupCursor.close()
 
         mDismissButton.setOnClickListener { view ->
-            if (mMediaPlayer != null && mMediaPlayer!!.isPlaying) {
-                mMediaPlayer!!.stop()
-                mMediaPlayer!!.release()
-                mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentVolume, AudioManager.FLAG_SHOW_UI)
-            }
-            finish()
+            dismissAlarm()
         }
 
         /*val player = MediaPlayer.create(this, RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_RINGTONE))
@@ -80,10 +114,76 @@ class AlarmActivity: AppCompatActivity() {
         mediaPlayer.start()*/
     }
 
+    override fun onBackPressed() {
+        super.onBackPressed()
+        dismissAlarm()
+    }
+
     override fun onAttachedToWindow() {
         window.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
                 or WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
                 or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                 or WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.i(LOG_TAG, "onDestroy()")
+        AlarmUtils.cancelAlarm(applicationContext, mTimeId)
+    }
+
+    private fun dismissAlarm() {
+        // Stop the music
+        if (mMediaPlayer != null && mMediaPlayer!!.isPlaying) {
+            mMediaPlayer!!.stop()
+            mMediaPlayer!!.release()
+        }
+
+        if (!isMoreAlarms()) { // if there are no more alarms set for the group, set the group as not-active
+            val values = ContentValues()
+            values.put(AlarmGroupEntry.COLUMN_ACTIVE, 0)
+
+            contentResolver.update(AlarmGroupEntry.CONTENT_URI,
+                    values,
+                    "${AlarmGroupEntry.COLUMN_ID}=?",
+                    arrayOf(mGroupId.toString()))
+        }
+
+        finish()
+    }
+
+    /**
+     * Checks if there are more set alarms for the current group
+     */
+    private fun isMoreAlarms(): Boolean {
+        if (mIsRepeating) return false // If the alarm is repeating, leave it as active until the user cancels the alarm
+        val projection = arrayOf(AlarmTimeEntry.COLUMN_ID)
+        val timesCursor = contentResolver.query(AlarmTimeEntry.CONTENT_URI,
+                projection,
+                "${AlarmTimeEntry.COLUMN_GROUP_ID}=? AND ${AlarmTimeEntry.COLUMN_ID}!=?",
+                arrayOf(mGroupId.toString(), mTimeId.toString()),
+                null)
+
+
+        var timeId: Int
+        var isAlarmExist: Boolean
+
+        while(timesCursor.moveToNext()) {
+            timeId = timesCursor.getInt(timesCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID))
+            Log.i(LOG_TAG, "timeId: $timeId")
+            isAlarmExist = (PendingIntent.getBroadcast(applicationContext,
+                    timeId,
+                    Intent(applicationContext, AlarmBroadcastReceiver::class.java),
+                    PendingIntent.FLAG_NO_CREATE) != null)
+
+            if (isAlarmExist) {
+                Log.i(LOG_TAG, "isMoreAlarms(): true")
+                return true
+            }
+        }
+
+        timesCursor.close()
+        Log.i(LOG_TAG, "isMoreAlarms(): false")
+        return false
     }
 }
