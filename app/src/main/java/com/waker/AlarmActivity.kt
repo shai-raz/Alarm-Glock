@@ -26,10 +26,12 @@ class AlarmActivity: AppCompatActivity() {
     private lateinit var mDismissButton: Button
     private lateinit var mAudioManager: AudioManager
     private var mMediaPlayer: MediaPlayer? = null
+    private lateinit var mDaysOfWeek: List<Int>
 
     private var mGroupId = 0
     private var mTimeId = 0
     private var mIsRepeating = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,8 +66,9 @@ class AlarmActivity: AppCompatActivity() {
             mMediaPlayer!!.start()
 
             val daysOfWeekString = groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK))
-            val daysOfWeek = AlarmUtils.getDOWArray(daysOfWeekString)
-            if (AlarmUtils.isRepeating(daysOfWeek)) { // If the alarm is set to repeat, set the next week's Alarm
+            mDaysOfWeek = AlarmUtils.getDOWArray(daysOfWeekString)
+            if (AlarmUtils.isRepeating(mDaysOfWeek)) { // If the alarm is set to repeat, set the next week's Alarm
+                Log.i(LOG_TAG, "mIsRepeating = true")
                 mIsRepeating = true
 
                 val timeProjection = arrayOf(AlarmTimeEntry.COLUMN_ID,
@@ -73,27 +76,47 @@ class AlarmActivity: AppCompatActivity() {
 
                 val timeCursor = contentResolver.query(AlarmTimeEntry.CONTENT_URI,
                         timeProjection,
-                        "${AlarmTimeEntry.COLUMN_GROUP_ID}=?",
-                        arrayOf(mGroupId.toString()),
+                        "${AlarmTimeEntry.COLUMN_ID}=?",
+                        arrayOf(mTimeId.toString()),
                         null)
 
-                val time = timeCursor.getInt(timeCursor.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
-                val timeId = timeCursor.getInt(timeCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID))
-                val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                val currentDayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
+                if (timeCursor.moveToFirst()) {
+                    val time = timeCursor.getInt(timeCursor.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
+                    val timeId = timeCursor.getInt(timeCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID))
+                    val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-                AlarmUtils.setAlarmForDayInWeek(applicationContext,
-                        time,
-                        timeId,
-                        mGroupId,
-                        currentDayOfWeek,
-                        alarmManager)
+                    val nextAlarmDate = Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, AlarmUtils.minutesInDayToHours(time).toInt())
+                        set(Calendar.MINUTE, AlarmUtils.minutesInDayToMinutes(time).toInt())
+                        set(Calendar.SECOND, 0)
+                        add(Calendar.DAY_OF_YEAR, 7)
+                    }
+
+                    AlarmUtils.setAlarm(applicationContext,
+                            time,
+                            timeId,
+                            mGroupId,
+                            AlarmUtils.listOfSpecificDay(Calendar.getInstance().get(Calendar.DAY_OF_WEEK)),
+                            alarmManager,
+                            nextAlarmDate)
+                }
 
                 timeCursor.close()
             }
         }
 
         groupCursor.close()
+
+        if (!isMoreAlarms()) { // if there are no more alarms set for the group, set the group as not-active
+            Log.i(LOG_TAG, "isMoreAlarms() = false")
+            val values = ContentValues()
+            values.put(AlarmGroupEntry.COLUMN_ACTIVE, 0)
+
+            contentResolver.update(AlarmGroupEntry.CONTENT_URI,
+                    values,
+                    "${AlarmGroupEntry.COLUMN_ID}=?",
+                    arrayOf(mGroupId.toString()))
+        }
 
         mDismissButton.setOnClickListener { view ->
             dismissAlarm()
@@ -129,7 +152,7 @@ class AlarmActivity: AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         Log.i(LOG_TAG, "onDestroy()")
-        AlarmUtils.cancelAlarm(applicationContext, mTimeId)
+        //AlarmUtils.cancelAlarm(applicationContext, mTimeId, mDaysOfWeek)
     }
 
     private fun dismissAlarm() {
@@ -139,16 +162,6 @@ class AlarmActivity: AppCompatActivity() {
             mMediaPlayer!!.release()
         }
 
-        if (!isMoreAlarms()) { // if there are no more alarms set for the group, set the group as not-active
-            val values = ContentValues()
-            values.put(AlarmGroupEntry.COLUMN_ACTIVE, 0)
-
-            contentResolver.update(AlarmGroupEntry.CONTENT_URI,
-                    values,
-                    "${AlarmGroupEntry.COLUMN_ID}=?",
-                    arrayOf(mGroupId.toString()))
-        }
-
         finish()
     }
 
@@ -156,7 +169,10 @@ class AlarmActivity: AppCompatActivity() {
      * Checks if there are more set alarms for the current group
      */
     private fun isMoreAlarms(): Boolean {
-        if (mIsRepeating) return false // If the alarm is repeating, leave it as active until the user cancels the alarm
+        if (mIsRepeating) { // If the alarm is repeating, leave it as active until the alarm has been set to inactive manually
+            return true
+        }
+
         val projection = arrayOf(AlarmTimeEntry.COLUMN_ID)
         val timesCursor = contentResolver.query(AlarmTimeEntry.CONTENT_URI,
                 projection,
@@ -172,7 +188,7 @@ class AlarmActivity: AppCompatActivity() {
             timeId = timesCursor.getInt(timesCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID))
             Log.i(LOG_TAG, "timeId: $timeId")
             isAlarmExist = (PendingIntent.getBroadcast(applicationContext,
-                    timeId,
+                    "${timeId}0".toInt(),
                     Intent(applicationContext, AlarmBroadcastReceiver::class.java),
                     PendingIntent.FLAG_NO_CREATE) != null)
 

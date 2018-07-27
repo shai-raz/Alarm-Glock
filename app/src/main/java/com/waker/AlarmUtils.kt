@@ -5,12 +5,16 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import com.waker.data.AlarmContract.AlarmGroupEntry
 import com.waker.data.AlarmContract.AlarmTimeEntry
+import java.text.SimpleDateFormat
 import java.util.*
 
 
 object AlarmUtils {
+
+    private val LOG_TAG = this.javaClass.simpleName!!
 
     /**
      * Set all Alarms of a group
@@ -59,10 +63,10 @@ object AlarmUtils {
      * @param daysOfWeek The Days of Week in which the Alarm should repeat - no repeating days will result in a one-time alarm
      * @param alarmManager AlarmManager: An AlarmManager instance
      */
-    fun setAlarm(appContext: Context, time: Int, timeId: Int, groupId: Int, daysOfWeek: List<Int>, alarmManager: AlarmManager) {
+    fun setAlarm(appContext: Context, time: Int, timeId: Int, groupId: Int, daysOfWeek: List<Int>, alarmManager: AlarmManager, specificAlarmTime: Calendar? = null) {
         val now = Calendar.getInstance()
 
-        val alarmTime = Calendar.getInstance().apply {
+        var alarmTime = specificAlarmTime ?: Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, minutesInDayToHours(time).toInt())
             set(Calendar.MINUTE, minutesInDayToMinutes(time).toInt())
             set(Calendar.SECOND, 0)
@@ -77,7 +81,7 @@ object AlarmUtils {
                     alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
                             alarmTime.timeInMillis,
                             PendingIntent.getBroadcast(appContext,
-                                    timeId,
+                                    "${timeId}0".toInt(),
                                     Intent(appContext, AlarmBroadcastReceiver::class.java)
                                             .putExtra("groupId", groupId)
                                             .putExtra("timeId", timeId),
@@ -87,7 +91,7 @@ object AlarmUtils {
                     alarmManager.setExact(AlarmManager.RTC_WAKEUP,
                             alarmTime.timeInMillis,
                             PendingIntent.getBroadcast(appContext,
-                                    timeId,
+                                    "${timeId}0".toInt(),
                                     Intent(appContext, AlarmBroadcastReceiver::class.java)
                                             .putExtra("groupId", groupId)
                                             .putExtra("timeId", timeId),
@@ -97,17 +101,28 @@ object AlarmUtils {
                     alarmManager.set(AlarmManager.RTC_WAKEUP,
                             alarmTime.timeInMillis,
                             PendingIntent.getBroadcast(appContext,
-                                    timeId,
+                                    "${timeId}0".toInt(),
                                     Intent(appContext, AlarmBroadcastReceiver::class.java)
                                             .putExtra("groupId", groupId)
                                             .putExtra("timeId", timeId),
                                     PendingIntent.FLAG_UPDATE_CURRENT))
             }
+            Log.i(LOG_TAG, "Next Alarm is set for ${SimpleDateFormat("dd.MM.yyyy HH:mm").format(alarmTime.time)}, [${timeId}0]")
         } else { // If the Alarm does repeat for certain days
-            for (i in daysOfWeek) {
+            for (i in 0 until daysOfWeek.size-1) {
+                alarmTime = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, minutesInDayToHours(time).toInt())
+                    set(Calendar.MINUTE, minutesInDayToMinutes(time).toInt())
+                    set(Calendar.SECOND, 0)
+                }
+                Log.i(LOG_TAG, daysOfWeek.toString())
                 alarmTime.set(Calendar.DAY_OF_WEEK, i+1)
-                if (i == 1) { // Set Repeating for a certain day
-                    if (alarmTime.before(now)) { // If the chosen time is before the current time, make it run the next week
+                if (daysOfWeek[i] == 1) { // Set Repeating for a certain day
+                    Log.i(LOG_TAG, "Day of week(i) = $i (${i+1})")
+                    Log.i(LOG_TAG, "System.currentTimeMillis(): ${System.currentTimeMillis()}, alarmTime.timeInMillis: ${alarmTime.timeInMillis}")
+                    if (System.currentTimeMillis() > alarmTime.timeInMillis) {
+                    //if (alarmTime.before(now)) { // If the chosen time is before the current time, make it run the next week
+                        Log.i(LOG_TAG, "System.currentTimeMillis() > alarmTime.timeInMillis = true")
                         alarmTime.add(Calendar.DAY_OF_YEAR, 7)
                     }
                     when {
@@ -115,7 +130,7 @@ object AlarmUtils {
                             alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
                                     alarmTime.timeInMillis,
                                     PendingIntent.getBroadcast(appContext,
-                                            timeId,
+                                            "$timeId${i+1}".toInt(),
                                             Intent(appContext, AlarmBroadcastReceiver::class.java)
                                                     .putExtra("groupId", groupId)
                                                     .putExtra("timeId", timeId),
@@ -125,7 +140,7 @@ object AlarmUtils {
                             alarmManager.setExact(AlarmManager.RTC_WAKEUP,
                                     alarmTime.timeInMillis,
                                     PendingIntent.getBroadcast(appContext,
-                                            timeId,
+                                            "$timeId${i+1}".toInt(),
                                             Intent(appContext, AlarmBroadcastReceiver::class.java)
                                                     .putExtra("groupId", groupId)
                                                     .putExtra("timeId", timeId),
@@ -135,12 +150,13 @@ object AlarmUtils {
                             alarmManager.set(AlarmManager.RTC_WAKEUP,
                                     alarmTime.timeInMillis,
                                     PendingIntent.getBroadcast(appContext,
-                                            timeId,
+                                            "$timeId${i+1}".toInt(),
                                             Intent(appContext, AlarmBroadcastReceiver::class.java)
                                                     .putExtra("groupId", groupId)
                                                     .putExtra("timeId", timeId),
                                             PendingIntent.FLAG_UPDATE_CURRENT))
                     }
+                    Log.i(LOG_TAG, "(Repeating) Next Alarm is set for ${SimpleDateFormat("dd.MM.yyyy HH:mm").format(alarmTime.time)} [$timeId${i+1}]")
                 }
             }
         }
@@ -167,18 +183,30 @@ object AlarmUtils {
      * @param groupId The ID of the group
      */
     fun cancelGroupAlarms(context: Context, groupId: Int) {
-        val projection = arrayOf(AlarmTimeEntry.COLUMN_ID)
-        val alarmCursor = context.contentResolver.query(AlarmTimeEntry.CONTENT_URI,
-                projection,
+        val groupProjection = arrayOf(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK)
+        val groupCursor = context.contentResolver.query(AlarmGroupEntry.CONTENT_URI,
+                groupProjection,
+                "${AlarmGroupEntry.COLUMN_ID}=?",
+                arrayOf(groupId.toString()),
+                null)
+
+        groupCursor.moveToFirst()
+        val daysOfWeek = getDOWArray(groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK)))
+
+        groupCursor.close()
+
+        val timeProjection = arrayOf(AlarmTimeEntry.COLUMN_ID)
+        val timeCursor = context.contentResolver.query(AlarmTimeEntry.CONTENT_URI,
+                timeProjection,
                 "${AlarmTimeEntry.COLUMN_GROUP_ID}=?",
                 arrayOf(groupId.toString()),
                 null)
 
-        while(alarmCursor.moveToNext()) {
-            cancelAlarm(context, alarmCursor.getInt(alarmCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID)))
+        while(timeCursor.moveToNext()) {
+            cancelAlarm(context, timeCursor.getInt(timeCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID)), daysOfWeek)
         }
 
-        alarmCursor.close()
+        timeCursor.close()
 
     }
 
@@ -187,17 +215,32 @@ object AlarmUtils {
      * @param appContext From getApplicationContext() / (applicationContext) - used for setting the alarms
      * @param timeId The ID of the time in the DB
      */
-    fun cancelAlarm(appContext: Context, timeId: Int) {
+    private fun cancelAlarm(appContext: Context, timeId: Int, daysOfWeek: List<Int>? = null) {
         val alarmManager = appContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-        val pendingIntent = PendingIntent.getBroadcast(appContext,
-                timeId,
-                Intent(appContext, AlarmBroadcastReceiver::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT)
+        var pendingIntent: PendingIntent
 
-        alarmManager.cancel(pendingIntent)
+        if (daysOfWeek != null && isRepeating(daysOfWeek)) {
+            for (i in 0 until daysOfWeek.size-1) {
+                pendingIntent = PendingIntent.getBroadcast(appContext,
+                        "$timeId${i+1}".toInt(),
+                        Intent(appContext, AlarmBroadcastReceiver::class.java),
+                        PendingIntent.FLAG_UPDATE_CURRENT)
 
-        pendingIntent.cancel()
+                alarmManager.cancel(pendingIntent)
+                pendingIntent.cancel()
+            }
+        } else {
+            pendingIntent = PendingIntent.getBroadcast(appContext,
+                    "${timeId}0".toInt(),
+                    Intent(appContext, AlarmBroadcastReceiver::class.java),
+                    PendingIntent.FLAG_UPDATE_CURRENT)
+            alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel()
+        }
+
+
+
     }
 
     /**
@@ -236,8 +279,14 @@ object AlarmUtils {
         daysOfWeekString = daysOfWeekString.replace("]","")
         daysOfWeekString = daysOfWeekString.replace("\\s+","")
         val daysOfWeekStringArray = daysOfWeekString.split(",")
-        return daysOfWeekStringArray.map { it.toInt() }
+        return daysOfWeekStringArray.map { it.trim().toInt() }
     }
 
     fun isRepeating(daysOfWeek: List<Int>) = daysOfWeek.contains(1)
+
+    fun listOfSpecificDay(dayOfWeek: Int): List<Int> {
+        val daysOfWeek = mutableListOf(0, 0, 0, 0, 0, 0, 0)
+        daysOfWeek[dayOfWeek-1] = 1
+        return daysOfWeek
+    }
 }

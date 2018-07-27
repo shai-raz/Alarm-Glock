@@ -2,6 +2,7 @@ package com.waker
 
 
 import android.Manifest
+import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
@@ -15,6 +16,7 @@ import android.support.v4.content.Loader
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import cn.pedant.SweetAlert.SweetAlertDialog
 import com.facebook.stetho.Stetho
 import com.waker.data.AlarmContract.AlarmGroupEntry
@@ -24,6 +26,8 @@ import kotlinx.android.synthetic.main.activity_main.*
 private const val MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 1
 
 class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> {
+
+    private val LOG_TAG = this.javaClass.simpleName!!
 
     private lateinit var mGroupsRecyclerView: RecyclerView
     private lateinit var mFab: FloatingActionButton
@@ -48,20 +52,24 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
             dialog.show()
         }
 
-        /*
-        @@ PendingIntent TEST @@
+
+        //@PendingIntent TEST
         val content = mutableListOf<String>()
         var isExist: Boolean
-        for (i in 0 .. 20) {
-            isExist = (PendingIntent.getBroadcast(applicationContext,
-                    i,
-                    Intent(applicationContext, AlarmBroadcastReceiver::class.java),
-                    PendingIntent.FLAG_NO_CREATE) != null)
-            content.add(i, isExist.toString())
-        }*/
+        for (i in 0 .. 5) {
+            for (x in 0 .. 7) {
+                isExist = (PendingIntent.getBroadcast(applicationContext,
+                        "$i$x".toInt(),
+                        Intent(applicationContext, AlarmBroadcastReceiver::class.java),
+                        PendingIntent.FLAG_NO_CREATE) != null)
+                content.add(i, "[$i$x]:$isExist")
+            }
+        }
+        Log.i(LOG_TAG, content.toString())
         /*SweetAlertDialog(this, SweetAlertDialog.NORMAL_TYPE)
-                .setContentText(AlarmUtils.isRepeating(listOf(0,0,0,0,0,1,0)).toString())
+                .setContentText(content.toString())
                 .show()*/
+
 
         mGroupsRecyclerView = groups_recycler_view
         mFab = add_group_fab
