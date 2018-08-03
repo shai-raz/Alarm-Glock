@@ -1,7 +1,19 @@
 <resources>
     <string name="app_name">Waker</string>
 
-    <!-- editor -->
+    <!-- Main -->
+    <string name="main_no_active_alarms">No active alarms.</string>
+    <string name="main_no_alarms_are_set">No alarms are set!</string>
+    <string name="main_next_alarm_in">Next alarm in:\n</string>
+    <string name="main_in_days">%1$d days,&#160;</string>
+    <string name="main_in_hours">%1$d hours,&#160;</string>
+    <string name="main_in_minutes">%1$d minutes,&#160;</string>
+    <string name="main_in_seconds">%1$d seconds.</string>
+    <string name="group_entry_first">First</string>
+    <string name="group_entry_last">Last</string>
+    <string name="group_entry_everyday">Everyday</string>
+
+    <!-- Editor -->
     <string name="editor_cancel_button">Cancel</string>
     <string name="editor_save_button">Save</string>
     <string name="editor_alarm_name">Alarm Name</string>
@@ -10,9 +22,15 @@
     <string name="editor_add_time_button">Add time</string>
     <string name="editor_advanced_settings_button">Advanced Settings</string>
     <string name="editor_no_ringtone_chosen">No ringtone was chosen</string>
+    <!-- Advanced Settings -->
+    <string name="editor_vibrate">Vibrate</string>
+    <string name="editor_alarm_volume">Alarm volume</string>
+    <string name="editor_snooze_duration">Snooze duration</string>
 
-    <!-- alarm -->
+    <!-- Alarm -->
+    <string name="alarm_dismiss_group">DISMISS GROUP</string>
     <string name="alarm_dismiss">DISMISS</string>
+    <string name="alarm_snooze">SNOOZE</string>
     <string name="editor_toggle_sunday">S</string>
     <string name="editor_toggle_monday">M</string>
     <string name="editor_toggle_tuesday">T</string>
@@ -21,14 +39,19 @@
     <string name="editor_toggle_friday">F</string>
     <string name="editor_toggle_saturday">S</string>
 
-    <!-- generic dialog -->
-    <string name="dialog_permission_required">Permission Required</string>
+    <!-- Generic Dialog -->
+    <string name="dialog_permission_required">Permission Required!</string>
+    <string name="dialog_request_permission">In order to be able to choose a ringtone, the app needs storage permission, please accept in the next dialog.</string>
+    <string name="dialog_permission_wasnt_granted">Permission was not granted</string>
 
-    <!-- @Menu@ -->
+    <!-- <Menu> -->
+        <!-- Main -->
+        <string name="menu_main_delete">Delete</string>
+    <!-- <Menu/> -->
 
-    <!-- main -->
-    <string name="menu_main_delete">Delete</string>
-
-    <!-- @Menu@ -->
+    <!-- Description -->
+    <string name="description_expand_or_collapse">Expand or Collapse</string>
+    <string name="description_sound_is_on">Sound is on</string>
+    <string name="description_sound_is_off">Sound is off</string>
 
 </resources>

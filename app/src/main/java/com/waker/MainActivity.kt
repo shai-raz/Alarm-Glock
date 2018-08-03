@@ -2,7 +2,6 @@ package com.waker
 
 
 import android.Manifest
-import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
@@ -14,9 +13,11 @@ import android.support.v4.content.ContextCompat
 import android.support.v4.content.CursorLoader
 import android.support.v4.content.Loader
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.util.Log
+import android.view.View
+import android.widget.TextView
 import cn.pedant.SweetAlert.SweetAlertDialog
 import com.facebook.stetho.Stetho
 import com.waker.data.AlarmContract.AlarmGroupEntry
@@ -29,7 +30,9 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
 
     private val LOG_TAG = this.javaClass.simpleName!!
 
+    private lateinit var mNextAlarmTextView: TextView
     private lateinit var mGroupsRecyclerView: RecyclerView
+    private lateinit var mEmptyView: TextView
     private lateinit var mFab: FloatingActionButton
     private lateinit var mGroupsAdapter: GroupsAdapter
 
@@ -43,7 +46,7 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
                 != PackageManager.PERMISSION_GRANTED) {
             val dialog = SweetAlertDialog(this, SweetAlertDialog.NORMAL_TYPE)
                     .setTitleText(getString(R.string.dialog_permission_required))
-                    .setContentText("In order to be able to choose a ringtone, we need some permissions, please accept in the next dialog.")
+                    .setContentText(getString(R.string.dialog_request_permission))
             dialog.setOnDismissListener {
                 ActivityCompat.requestPermissions(this,
                         arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
@@ -54,7 +57,7 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
 
 
         //@PendingIntent TEST
-        val content = mutableListOf<String>()
+        /*val content = mutableListOf<String>()
         var isExist: Boolean
         for (i in 0 .. 5) {
             for (x in 0 .. 7) {
@@ -65,15 +68,17 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
                 content.add(i, "[$i$x]:$isExist")
             }
         }
-        Log.i(LOG_TAG, content.toString())
+        Log.i(LOG_TAG, content.toString())*/
         /*SweetAlertDialog(this, SweetAlertDialog.NORMAL_TYPE)
                 .setContentText(content.toString())
                 .show()*/
 
-
-        mGroupsRecyclerView = groups_recycler_view
+        mNextAlarmTextView = next_alarm_textview
+        mGroupsRecyclerView = groups_recyclerview
+        mEmptyView = groups_empty_view
         mFab = add_group_fab
 
+        mGroupsRecyclerView.addItemDecoration(DividerItemDecoration(this, 1))
         mGroupsRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
 
         mGroupsAdapter = GroupsAdapter(this, null)
@@ -82,7 +87,7 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
         LoaderManager.getInstance(this).initLoader(1, null, this)
 
         mFab.setOnClickListener {
-            startActivity(Intent(this, AlarmEditor::class.java))
+            startActivity(Intent(this, AlarmEditorActivity::class.java))
         }
     }
 
@@ -91,6 +96,8 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
                 AlarmGroupEntry.COLUMN_ID,
                 AlarmGroupEntry.COLUMN_NAME,
                 AlarmGroupEntry.COLUMN_ACTIVE,
+                AlarmGroupEntry.COLUMN_SOUND,
+                AlarmGroupEntry.COLUMN_DAYS_IN_WEEK,
                 AlarmGroupEntry.COLUMN_SOUND)
 
         return CursorLoader(
@@ -103,6 +110,7 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
     }
 
     override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
+        updateTimeTillNextAlarm(cursor)
         mGroupsAdapter.swapCursor(cursor)?.close()
     }
 
@@ -110,5 +118,35 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
         mGroupsAdapter.swapCursor(null)?.close()
     }
 
+    /**
+     * If there are no alarms set, sets the empty view as VISIBLE,
+     * Otherwise, sets it to GONE
+     * @param cursor Cursor: The loaded cursor
+     * @return Returns `true` if the empty view has been set, `false` otherwise
+     */
+    private fun setEmptyView(cursor: Cursor?): Boolean {
+        if (cursor == null || cursor.count == 0) {
+            mEmptyView.visibility = View.VISIBLE
+            return true
+        }
+        mEmptyView.visibility = View.GONE
+        return false
+
+    }
+
+    /**
+     * Updating time left until the next alarm.
+     * If no alarms are set - sets an empty view.
+     * @param cursor Cursor: The loaded cursor
+     */
+    private fun updateTimeTillNextAlarm(cursor: Cursor?) {
+        if (!setEmptyView(cursor)) {
+            val nextAlarm = AlarmUtils.getNextAlarmString(this)
+            mNextAlarmTextView.visibility = View.VISIBLE
+            mNextAlarmTextView.text = nextAlarm
+        } else {
+            mNextAlarmTextView.visibility = View.GONE
+        }
+    }
 
 }

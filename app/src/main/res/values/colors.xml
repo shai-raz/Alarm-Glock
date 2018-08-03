@@ -2,12 +2,14 @@
 <resources>
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorAccent">#22338c</color>
 
     <color name="gray_btn_bg_pressed_color">#B6B6B6</color>
 
     <color name="BodyTextView">#292929</color>
     <color name="SubtitleTextView">#98434343</color>
+    <color name="TimesTextView">#8a000000</color>
+    <color name="DayOfWeekText">#af000000</color>
 
     <color name="ToggleBackground">#cccccc</color>
 </resources>

@@ -1,16 +1,20 @@
 package com.waker
 
+import android.Manifest
 import android.app.AlarmManager
 import android.app.TimePickerDialog
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.support.design.widget.Snackbar
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
@@ -20,6 +24,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import cn.pedant.SweetAlert.SweetAlertDialog
 import com.waker.data.AlarmContract
 import com.waker.data.AlarmContract.AlarmGroupEntry
 import com.waker.data.AlarmContract.AlarmTimeEntry
@@ -27,10 +32,11 @@ import kotlinx.android.synthetic.main.activity_alarm_editor.*
 import kotlinx.android.synthetic.main.editor_times_entry.view.*
 
 
-const val SELECT_RINGTONE = 1
+private const val SELECT_RINGTONE_RESULTS = 1
+private const val PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 2
+private const val ADVANCED_SETTINGS_RESULTS = 3
 
-
-class AlarmEditor: AppCompatActivity() {
+class AlarmEditorActivity: AppCompatActivity() {
 
     private val LOG_TAG = this.javaClass.simpleName!!
 
@@ -51,8 +57,11 @@ class AlarmEditor: AppCompatActivity() {
     private var mEditMode = false
     private val mTimesList = mutableListOf<Int>()
     private var mGroupId: Int = 0
-    private var ringtoneUri: Uri? = Uri.EMPTY
 
+    private var ringtoneUri: Uri? = Uri.EMPTY
+    private var isVibrate = false
+    private var volume = 100
+    private var snoozeDuration = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,6 +79,12 @@ class AlarmEditor: AppCompatActivity() {
         mAddTimeButton = editor_add_time_button
         mCancelButton = editor_cancel_button
         mSaveButton = editor_save_button
+
+        mSoundSwitch.setOnClickListener {
+            if (!mSoundSwitch.isEnabled) {
+                Toast.makeText(this, "Please choose a ringtone first!", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         mDaysOfWeekToggle = arrayOf(editor_toggle_sunday,
                 editor_toggle_monday,
@@ -92,8 +107,30 @@ class AlarmEditor: AppCompatActivity() {
         }
 
         mPickRingtoneButton.setOnClickListener {
-            val ringtoneIntent = Intent(Intent.ACTION_PICK, android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
-            startActivityForResult(ringtoneIntent, SELECT_RINGTONE)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) { // Check for storage permissions
+                val dialog = SweetAlertDialog(this, SweetAlertDialog.NORMAL_TYPE)
+                        .setTitleText(getString(R.string.dialog_permission_required))
+                        .setContentText(getString(R.string.dialog_request_permission))
+                dialog.setOnDismissListener {
+                    ActivityCompat.requestPermissions(this,
+                            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
+                            PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE)
+                }
+                dialog.show()
+            } else {
+                val ringtoneIntent = Intent(Intent.ACTION_PICK, android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
+                startActivityForResult(ringtoneIntent, SELECT_RINGTONE_RESULTS)
+            }
+        }
+
+        mAdvancedButton.setOnClickListener {
+            val intent = Intent(this, AdvancedSettingsActivity::class.java)
+            intent.putExtra("ringtoneUri", ringtoneUri)
+            intent.putExtra("vibrate", isVibrate)
+            intent.putExtra("volume", volume)
+            intent.putExtra("snooze_duration", snoozeDuration)
+            startActivityForResult(intent, ADVANCED_SETTINGS_RESULTS)
         }
 
         mTimesRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
@@ -103,7 +140,7 @@ class AlarmEditor: AppCompatActivity() {
 
         val itemTouchHelper = ItemTouchHelper(object: ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
             override fun onMove(p0: RecyclerView, p1: RecyclerView.ViewHolder, p2: RecyclerView.ViewHolder): Boolean {
-                Toast.makeText(this@AlarmEditor, "Moved", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@AlarmEditorActivity, "Moved", Toast.LENGTH_SHORT).show()
                 return true
             }
 
@@ -148,7 +185,11 @@ class AlarmEditor: AppCompatActivity() {
             val projection = arrayOf(AlarmGroupEntry.COLUMN_NAME,
                     AlarmGroupEntry.COLUMN_SOUND,
                     AlarmGroupEntry.COLUMN_RINGTONE_URI,
-                    AlarmGroupEntry.COLUMN_DAYS_IN_WEEK)
+                    AlarmGroupEntry.COLUMN_DAYS_IN_WEEK,
+                    AlarmGroupEntry.COLUMN_VIBRATE,
+                    AlarmGroupEntry.COLUMN_VOLUME,
+                    AlarmGroupEntry.COLUMN_SNOOZE_DURATION)
+
             val groupCursor = contentResolver.query(AlarmGroupEntry.CONTENT_URI,
                     projection,
                     "${AlarmGroupEntry.COLUMN_ID}=?",
@@ -170,20 +211,48 @@ class AlarmEditor: AppCompatActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (resultCode == RESULT_OK && requestCode == SELECT_RINGTONE) {
-            ringtoneUri = data!!.data
-
-            val ringtoneCursor = contentResolver.query(
-                    ringtoneUri,
-                    arrayOf(MediaStore.Audio.Media.TITLE),
-                    null, null, null)
-            if(ringtoneCursor.moveToFirst()) {
-                mPickRingtoneTextView.text = ringtoneCursor.getString(ringtoneCursor.getColumnIndex(MediaStore.MediaColumns.TITLE))
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) { // If permission is granted, let the user choose a ringtone
+                val ringtoneIntent = Intent(Intent.ACTION_PICK, android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
+                startActivityForResult(ringtoneIntent, SELECT_RINGTONE_RESULTS)
+            } else {
+                Toast.makeText(this, getString(R.string.dialog_permission_wasnt_granted), Toast.LENGTH_SHORT).show()
             }
-            ringtoneCursor.close()
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (resultCode == RESULT_OK) {
+            when (requestCode) {
+                SELECT_RINGTONE_RESULTS -> {
+                    ringtoneUri = data!!.data
+
+                    val ringtoneCursor = contentResolver.query(
+                            ringtoneUri,
+                            arrayOf(MediaStore.Audio.Media.TITLE),
+                            null, null, null)
+                    if (ringtoneCursor.moveToFirst()) {
+                        mPickRingtoneTextView.text = ringtoneCursor.getString(ringtoneCursor.getColumnIndex(MediaStore.MediaColumns.TITLE))
+                    }
+                    ringtoneCursor.close()
+
+                    mSoundSwitch.isEnabled = true
+                    mSoundSwitch.isChecked = true
+                }
+
+                ADVANCED_SETTINGS_RESULTS -> {
+                    isVibrate = data!!.getBooleanExtra("vibrate", false)
+                    volume = data.getIntExtra("volume", 100)
+                    snoozeDuration = data.getIntExtra("snooze_duration", 1)
+                }
+            }
         } else {
-            Toast.makeText(this, getString(R.string.editor_no_ringtone_chosen), Toast.LENGTH_SHORT).show()
+            if (requestCode == SELECT_RINGTONE_RESULTS) {
+                Toast.makeText(this, getString(R.string.editor_no_ringtone_chosen), Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -197,10 +266,10 @@ class AlarmEditor: AppCompatActivity() {
                     ringtoneUri,
                     arrayOf(MediaStore.Audio.Media.TITLE),
                     null, null, null)
-            if(ringtoneCursor.moveToFirst()) {
+            if (ringtoneCursor != null && ringtoneCursor.moveToFirst()) {
                 mPickRingtoneTextView.text = ringtoneCursor.getString(ringtoneCursor.getColumnIndex(MediaStore.MediaColumns.TITLE))
+                ringtoneCursor.close()
             }
-            ringtoneCursor.close()
 
             var daysOfWeek = groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK))
             daysOfWeek = daysOfWeek.replace("[","")
@@ -211,6 +280,14 @@ class AlarmEditor: AppCompatActivity() {
             for (i in 0 until mDaysOfWeekToggle.size) {
                 mDaysOfWeekToggle[i].isChecked = daysOfWeekArray[i].trim().toInt() == 1
             }
+
+            if (ringtoneUri != Uri.EMPTY) {
+                mSoundSwitch.isEnabled = true
+            }
+
+            isVibrate = groupCursor.getInt(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_VIBRATE)) == 1
+            volume = groupCursor.getInt(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_VOLUME))
+            snoozeDuration = groupCursor.getInt(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_SNOOZE_DURATION))
 
         }
 
@@ -230,9 +307,9 @@ class AlarmEditor: AppCompatActivity() {
      */
     private fun saveAlarm() {
         val alarmName = mAlarmNameEditText.text.toString().trim()
-        val isSound = if (mSoundSwitch.isChecked) 1 else 0
+        val isSound = mSoundSwitch.isChecked.toInt()
 
-        if (ringtoneUri != Uri.EMPTY) {
+        if (!hasDupliactes()) {
             val groupValues = ContentValues()
             groupValues.put(AlarmGroupEntry.COLUMN_NAME, alarmName)
             groupValues.put(AlarmGroupEntry.COLUMN_ACTIVE, 1)
@@ -241,9 +318,12 @@ class AlarmEditor: AppCompatActivity() {
 
             val daysOfWeek: MutableList<Int> = mutableListOf()
             for (i in 0 until mDaysOfWeekToggle.size) {
-                daysOfWeek.add(i, if(mDaysOfWeekToggle[i].isChecked) 1 else 0)
+                daysOfWeek.add(i, mDaysOfWeekToggle[i].isChecked.toInt())
             }
             groupValues.put(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK, daysOfWeek.toString())
+            groupValues.put(AlarmGroupEntry.COLUMN_VIBRATE, isVibrate.toInt())
+            groupValues.put(AlarmGroupEntry.COLUMN_VOLUME, volume)
+            groupValues.put(AlarmGroupEntry.COLUMN_SNOOZE_DURATION, snoozeDuration)
 
             val timesValues = ContentValues()
             var timeUri: Uri
@@ -318,12 +398,12 @@ class AlarmEditor: AppCompatActivity() {
             }
 
             finish()
-        } else { // If ringtone wasn't selected
-            Toast.makeText(this, "Please choose a ringtone", Toast.LENGTH_SHORT).show()
+        } else { // 2 alarms at the same time
+            Toast.makeText(this, "You can't have 2 alarms at the same time!", Toast.LENGTH_SHORT).show()
         }
     }
 
-    inner class TimesAdapter(private val mContext: AppCompatActivity, private val list: MutableList<Int>) :
+    private inner class TimesAdapter(private val mContext: AppCompatActivity, private val list: MutableList<Int>) :
             RecyclerView.Adapter<TimesAdapter.ViewHolder>() {
 
         inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -358,5 +438,21 @@ class AlarmEditor: AppCompatActivity() {
             holder.update(position)
         }
 
+    }
+
+    private fun hasDupliactes(): Boolean {
+        val duplicateList = mutableListOf<Int>()
+        mTimesList.forEachIndexed { i, _ ->
+            mTimesList.forEachIndexed { u, time ->
+                if (i != u) {
+                    if (duplicateList.contains(time)) {
+                        return true
+                    } else {
+                        duplicateList.add(time)
+                    }
+                }
+            }
+        }
+        return false
     }
 }

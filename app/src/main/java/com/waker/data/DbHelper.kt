@@ -10,7 +10,7 @@ class DbHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, null,
 
     companion object {
         // If you change the database schema, you must increment the database version.
-        const val DATABASE_VERSION = 1
+        const val DATABASE_VERSION = 4 // 31.07.18 16:49
         const val DATABASE_NAME = "Alarms.db"
 
         private const val SQL_CREATE_GROUP_ENTRIES =
@@ -20,7 +20,10 @@ class DbHelper(context: Context): SQLiteOpenHelper(context, DATABASE_NAME, null,
                         "${AlarmGroupEntry.COLUMN_ACTIVE} INTEGER," +
                         "${AlarmGroupEntry.COLUMN_SOUND} INTEGER," +
                         "${AlarmGroupEntry.COLUMN_RINGTONE_URI} TEXT," +
-                        "${AlarmGroupEntry.COLUMN_DAYS_IN_WEEK} VARCHAR(15) DEFAULT [0,0,0,0,0,0,0])"
+                        "${AlarmGroupEntry.COLUMN_DAYS_IN_WEEK} VARCHAR(15) DEFAULT [0,0,0,0,0,0,0]," +
+                        "${AlarmGroupEntry.COLUMN_VIBRATE} INTEGER," +
+                        "${AlarmGroupEntry.COLUMN_VOLUME} INTEGER," +
+                        "${AlarmGroupEntry.COLUMN_SNOOZE_DURATION} INTEGER)"
 
         private const val SQL_CREATE_TIME_ENTRIES =
                 "CREATE TABLE ${AlarmTimeEntry.TABLE_NAME} " +

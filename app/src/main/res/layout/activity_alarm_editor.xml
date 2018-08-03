@@ -1,31 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:focusable="true"
     android:focusableInTouchMode="true"
-    android:padding="8dp">
+    android:paddingLeft="8dp"
+    android:paddingRight="8dp">
 
     <LinearLayout
         android:id="@+id/editor_settings_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="@dimen/editor_settings_layout_margin">
+        android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/editor_name_edit_text"
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/text_input_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/editor_alarm_name"
-            android:inputType="textCapSentences" />
+            android:layout_marginTop="@dimen/editor_settings_layout_margin"
+            android:layout_marginBottom="@dimen/editor_settings_layout_margin">
+
+            <EditText
+                android:id="@+id/editor_name_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/editor_alarm_name"
+                android:inputType="textCapSentences"
+                android:padding="12dp"/>
+
+        </android.support.design.widget.TextInputLayout>
+
+        <View style="@style/dividerHorizontal"/>
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/editor_settings_layout_margin">
+            style="@style/EditorSetting">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -40,19 +52,22 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_alignParentEnd="true"
-                android:layout_alignParentRight="true" />
+                android:layout_alignParentRight="true"
+                android:checked="false"
+                android:enabled="false"/>
         </RelativeLayout>
 
+        <View style="@style/dividerHorizontal"/>
 
         <LinearLayout
             android:id="@+id/editor_pick_ringtone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="@dimen/editor_settings_layout_margin"
             android:clickable="true"
             android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackground">
+            android:foreground="?android:attr/selectableItemBackground"
+            style="@style/EditorSetting">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -66,6 +81,8 @@
                 android:text="Ringtone Name"
                 style="@style/EditorSubtitle"/>
         </LinearLayout>
+
+        <View style="@style/dividerHorizontal"/>
 
         <!-- Days in week -->
         <LinearLayout

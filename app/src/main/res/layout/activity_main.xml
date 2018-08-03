@@ -2,26 +2,44 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/groups_recycler_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="5dp"/>
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <TextView
-        android:id="@+id/list_empty_view"
+        android:id="@+id/next_alarm_textview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="Next alarm is in 5 minutes"
+        android:gravity="center_horizontal"
+        android:padding="16dp"
+        style="@style/EditorTextView"/>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/groups_recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="5dp"
+        android:layout_below="@id/next_alarm_textview"/>
+
+    <TextView
+        android:id="@+id/groups_empty_view"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:text="@string/main_no_alarms_are_set"
+        android:drawableTop="@drawable/ic_alarm_off"
+        android:drawablePadding="8dp"
+        android:layout_centerInParent="true"
+        android:visibility="gone"
+        style="@style/Times"/>
+
+
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/add_group_fab"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
         android:layout_margin="16dp"
         android:clickable="true"
         android:focusable="true"

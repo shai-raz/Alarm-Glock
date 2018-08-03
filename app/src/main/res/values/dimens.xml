@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="editor_settings_layout_margin">10dp</dimen>
+    <dimen name="editor_settings_layout_margin">16dp</dimen>
 </resources>
