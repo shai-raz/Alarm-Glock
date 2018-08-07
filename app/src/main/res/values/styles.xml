@@ -8,7 +8,9 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="EditorTextView">
+    <style name="EditorActivityTheme" parent="Theme.AppCompat.Light"/>
+
+    <style name="EditorTextView" parent="Theme.AppCompat.Light">
         <item name="android:textSize">16sp</item>
         <item name="android:textColor">@color/BodyTextView</item>
     </style>
@@ -22,6 +24,17 @@
     <style name="EditorSetting">
         <item name="android:paddingTop">@dimen/editor_settings_layout_margin</item>
         <item name="android:paddingBottom">@dimen/editor_settings_layout_margin</item>
+    </style>
+
+    <style name="EditorButton" parent="@style/Widget.AppCompat.Button.Borderless">
+        <item name="android:background">@drawable/rounded_button</item>
+        <item name="android:textColor">#fbfbfc</item>
+    </style>
+
+    <style name="AddTimeButton" parent="@style/Widget.AppCompat.Button.Borderless">
+        <item name="android:background">@drawable/circle_button</item>
+        <item name="android:layout_height">56dp</item>
+        <item name="android:layout_width">56dp</item>
     </style>
 
     <style name="GroupEntryTime">
@@ -42,8 +55,13 @@
     </style>
 
     <style name="Times">
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">20sp</item>
         <item name="android:textColor">@color/TimesTextView</item>
+    </style>
+
+    <style name="GroupTimes">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/GroupTimesTextView</item>
     </style>
 
     <!-- Divider -->

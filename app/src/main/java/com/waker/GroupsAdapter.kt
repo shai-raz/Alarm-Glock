@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.database.Cursor
 import android.graphics.Color
-import android.support.constraint.ConstraintLayout
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.view.ActionMode
 import android.support.v7.widget.LinearLayoutManager
@@ -73,7 +72,8 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
     inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         // Declare widgets
         //private val groupCardView: CardView = view.group_entry_card_view
-        private val groupLayout: ConstraintLayout = view.group_entry_layout
+        private val groupLayout: LinearLayout = view.group_entry_layout
+        //private val groupLayout: ConstraintLayout = view.group_entry_layout
         private val groupExpandButton: ImageButton = view.group_entry_expand
         private val groupNameTextView: TextView = view.group_entry_name
         //private val groupFirstTimeLayout: LinearLayout = view.group_entry_first_layout
@@ -143,6 +143,10 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
                     mExpandedPosition = if (isExpanded) -1 else position
                     notifyItemChanged(position)
                 }
+            }
+
+            if (isActive) {
+                groupLayout.setBackgroundColor(Color.parseColor("#FFFFFF"))
             }
 
             groupSwitch.setOnCheckedChangeListener { button, isChecked ->

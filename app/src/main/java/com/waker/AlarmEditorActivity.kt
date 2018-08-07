@@ -15,7 +15,9 @@ import android.provider.MediaStore
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
+import android.support.v4.widget.NestedScrollView
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.SwitchCompat
@@ -30,6 +32,7 @@ import com.waker.data.AlarmContract.AlarmGroupEntry
 import com.waker.data.AlarmContract.AlarmTimeEntry
 import kotlinx.android.synthetic.main.activity_alarm_editor.*
 import kotlinx.android.synthetic.main.editor_times_entry.view.*
+import java.util.*
 
 
 private const val SELECT_RINGTONE_RESULTS = 1
@@ -40,6 +43,9 @@ class AlarmEditorActivity: AppCompatActivity() {
 
     private val LOG_TAG = this.javaClass.simpleName!!
 
+    private lateinit var mCancelButton: ImageButton
+    private lateinit var mSaveButton: ImageButton
+    private lateinit var mScrollView: NestedScrollView
     private lateinit var mAlarmNameEditText: EditText
     private lateinit var mSoundSwitch: SwitchCompat
     private lateinit var mPickRingtoneButton: LinearLayout
@@ -47,20 +53,21 @@ class AlarmEditorActivity: AppCompatActivity() {
     private lateinit var mDaysOfWeekToggle: Array<ToggleButton>
     private lateinit var mAdvancedButton: Button
     private lateinit var mTimesRecyclerView: RecyclerView
-    private lateinit var mAddTimeButton: Button
-    private lateinit var mCancelButton: Button
-    private lateinit var mSaveButton: Button
+    private lateinit var mAddTimeButton: ImageButton
+    //private lateinit var mCancelButton: Button
+    //private lateinit var mSaveButton: Button
 
     private lateinit var mAlarmManager: AlarmManager
+    private lateinit var mLayoutManager: LinearLayoutManager
     private lateinit var mTimesAdapter: TimesAdapter
 
     private var mEditMode = false
-    private val mTimesList = mutableListOf<Int>()
+    private var mTimesList = mutableListOf<Int>()
     private var mGroupId: Int = 0
 
     private var ringtoneUri: Uri? = Uri.EMPTY
     private var isVibrate = false
-    private var volume = 100
+    private var volume = 50
     private var snoozeDuration = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,6 +77,9 @@ class AlarmEditorActivity: AppCompatActivity() {
         mAlarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
         // Widgets
+        mCancelButton = editor_toolbar_cancel
+        mSaveButton = editor_toolbar_done
+        mScrollView = editor_scroll_view
         mAlarmNameEditText = editor_name_edit_text
         mSoundSwitch = editor_sound_switch
         mPickRingtoneButton = editor_pick_ringtone
@@ -77,8 +87,9 @@ class AlarmEditorActivity: AppCompatActivity() {
         mAdvancedButton = editor_advanced_settings_button
         mTimesRecyclerView = editor_times_recycler_view
         mAddTimeButton = editor_add_time_button
-        mCancelButton = editor_cancel_button
-        mSaveButton = editor_save_button
+        //mCancelButton = editor_cancel_button
+        //mSaveButton = editor_save_button
+
 
         mSoundSwitch.setOnClickListener {
             if (!mSoundSwitch.isEnabled) {
@@ -133,7 +144,9 @@ class AlarmEditorActivity: AppCompatActivity() {
             startActivityForResult(intent, ADVANCED_SETTINGS_RESULTS)
         }
 
-        mTimesRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        mTimesRecyclerView.addItemDecoration(DividerItemDecoration(this, 1))
+        mLayoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        mTimesRecyclerView.layoutManager = mLayoutManager
 
         mTimesAdapter = TimesAdapter(this, mTimesList)
         mTimesRecyclerView.adapter = mTimesAdapter
@@ -210,6 +223,7 @@ class AlarmEditorActivity: AppCompatActivity() {
             mTimesList.add(0)
         }
     }
+
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -299,7 +313,23 @@ class AlarmEditorActivity: AppCompatActivity() {
 
     private fun addTime() {
         mTimesList.add(0)
-        mTimesAdapter.notifyItemInserted(mTimesList.size-1)
+        val position = mTimesList.size-1
+        mTimesAdapter.notifyItemInserted(position)
+
+        val now = Calendar.getInstance()
+        val hours = now.get(Calendar.HOUR_OF_DAY)
+        val minutes = now.get(Calendar.MINUTE)
+
+        val timePickerDialog = TimePickerDialog(this,
+                TimePickerDialog.OnTimeSetListener { _, selectedHour, selectedMin ->
+                    mTimesList[position] = AlarmUtils.getMinutesInDay(selectedHour, selectedMin)
+                    mTimesAdapter.notifyItemChanged(position) },
+                hours,
+                minutes,
+                true)
+        timePickerDialog.show()
+
+        mScrollView.smoothScrollTo(0, mScrollView.bottom)
     }
 
     /**
@@ -309,7 +339,7 @@ class AlarmEditorActivity: AppCompatActivity() {
         val alarmName = mAlarmNameEditText.text.toString().trim()
         val isSound = mSoundSwitch.isChecked.toInt()
 
-        if (!hasDupliactes()) {
+        if (!hasDuplicates()) {
             val groupValues = ContentValues()
             groupValues.put(AlarmGroupEntry.COLUMN_NAME, alarmName)
             groupValues.put(AlarmGroupEntry.COLUMN_ACTIVE, 1)
@@ -360,6 +390,8 @@ class AlarmEditorActivity: AppCompatActivity() {
                     }
                 }
             } else { // Editing existing Alarm (Update)
+                AlarmUtils.cancelGroupAlarms(this, mGroupId)
+
                 val rowsAffected = contentResolver.update(AlarmGroupEntry.CONTENT_URI,
                         groupValues,
                         "${AlarmGroupEntry.COLUMN_ID}=?",
@@ -370,8 +402,6 @@ class AlarmEditorActivity: AppCompatActivity() {
                 } else {
                     Snackbar.make(mAlarmNameEditText, "Time Saved", Snackbar.LENGTH_SHORT).show()
                 }
-
-                AlarmUtils.cancelGroupAlarms(this, mGroupId)
 
                 // Delete all existing times, and insert them anew
                 contentResolver.delete(AlarmTimeEntry.CONTENT_URI,
@@ -440,17 +470,14 @@ class AlarmEditorActivity: AppCompatActivity() {
 
     }
 
-    private fun hasDupliactes(): Boolean {
+    private fun hasDuplicates(): Boolean {
         val duplicateList = mutableListOf<Int>()
-        mTimesList.forEachIndexed { i, _ ->
-            mTimesList.forEachIndexed { u, time ->
-                if (i != u) {
-                    if (duplicateList.contains(time)) {
-                        return true
-                    } else {
-                        duplicateList.add(time)
-                    }
-                }
+        for (time in mTimesList) {
+            if (duplicateList.contains(time)) {
+                return true
+            }
+            else {
+                duplicateList.add(time)
             }
         }
         return false

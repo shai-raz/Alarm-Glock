@@ -20,6 +20,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.TextView
+import com.waker.AlarmUtils.getMinutesInDay
 import com.waker.data.AlarmContract.AlarmGroupEntry
 import com.waker.data.AlarmContract.AlarmTimeEntry
 import kotlinx.android.synthetic.main.alarm_layout.*
@@ -69,7 +70,7 @@ class AlarmActivity: AppCompatActivity() {
 
         alarm()
 
-        if (isMoreAlarms()) { // Disable Snooze Button (GONE) if this Alarm is repeating, or not the last in group
+        if (isMoreAlarms(false)) { // Disable Snooze Button (GONE) if this Alarm is repeating, or not the last in group
             mSnoozeButton.visibility = View.GONE
         }
 
@@ -105,8 +106,6 @@ class AlarmActivity: AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        super.onBackPressed()
-        dismissAlarm()
     }
 
     override fun onAttachedToWindow() {
@@ -219,6 +218,7 @@ class AlarmActivity: AppCompatActivity() {
         } else {
             val currentDayOfWeek = mCalendar.get(Calendar.DAY_OF_WEEK)
             AlarmUtils.cancelGroupAlarms(this, mGroupId, dayOfWeek = currentDayOfWeek)
+            AlarmUtils.setGroupAlarms(this, mGroupId, dayOfWeek = currentDayOfWeek, nextWeek = true)
         }
         finishAlarm()
     }
@@ -285,15 +285,17 @@ class AlarmActivity: AppCompatActivity() {
             return true
         }
 
-        val projection = arrayOf(AlarmTimeEntry.COLUMN_ID)
+        val projection = arrayOf(AlarmTimeEntry.COLUMN_ID,
+                AlarmTimeEntry.COLUMN_TIME)
         val timesCursor = contentResolver.query(AlarmTimeEntry.CONTENT_URI,
                 projection,
                 "${AlarmTimeEntry.COLUMN_GROUP_ID}=? AND ${AlarmTimeEntry.COLUMN_ID}!=?",
                 arrayOf(mGroupId.toString(), mTimeId.toString()),
                 null)
 
-
+        val currentTime = getMinutesInDay(Calendar.getInstance().get(Calendar.HOUR_OF_DAY),Calendar.getInstance().get(Calendar.MINUTE))
         var timeId: Int
+        var time: Int
         var isAlarmExist: Boolean
         var dayOfWeek = 0
         if (!checkRepeating) {
@@ -304,15 +306,19 @@ class AlarmActivity: AppCompatActivity() {
 
         while(timesCursor.moveToNext()) {
             timeId = timesCursor.getInt(timesCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID))
-            Log.i(LOG_TAG, "timeId: $timeId")
-            isAlarmExist = (PendingIntent.getBroadcast(applicationContext,
-                    "$timeId$dayOfWeek".toInt(),
-                    Intent(applicationContext, AlarmBroadcastReceiver::class.java),
-                    PendingIntent.FLAG_NO_CREATE) != null)
+            time = timesCursor.getInt(timesCursor.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
+            Log.i(LOG_TAG, "currentTime: $currentTime, time: $time")
+            if (time > currentTime) {
+                Log.i(LOG_TAG, "timeId: $timeId")
+                isAlarmExist = (PendingIntent.getBroadcast(applicationContext,
+                        "$timeId$dayOfWeek".toInt(),
+                        Intent(applicationContext, AlarmBroadcastReceiver::class.java),
+                        PendingIntent.FLAG_NO_CREATE) != null)
 
-            if (isAlarmExist) {
-                Log.i(LOG_TAG, "isMoreAlarms(): true")
-                return true
+                if (isAlarmExist) {
+                    Log.i(LOG_TAG, "isMoreAlarms(): true")
+                    return true
+                }
             }
         }
 

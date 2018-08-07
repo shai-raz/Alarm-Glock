@@ -14,12 +14,15 @@
         android:padding="16dp"
         style="@style/EditorTextView"/>
 
+    <View style="@style/dividerHorizontal"
+        android:id="@+id/groups_active_divider"
+        android:layout_below="@id/next_alarm_textview"/>
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/groups_recyclerview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="5dp"
-        android:layout_below="@id/next_alarm_textview"/>
+        android:layout_below="@id/groups_active_divider"/>
 
     <TextView
         android:id="@+id/groups_empty_view"

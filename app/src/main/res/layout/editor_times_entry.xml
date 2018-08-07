@@ -9,7 +9,7 @@
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground">
 
-    <ImageView
+    <!--<ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/ic_alarm"
@@ -17,14 +17,25 @@
         android:layout_toLeftOf="@id/editor_times_list_view_text_view"
         android:layout_toStartOf="@id/editor_times_list_view_text_view"
         android:layout_marginRight="8dp"
-        android:layout_marginEnd="8dp" />
+        android:layout_marginEnd="8dp" />-->
 
     <TextView
         android:id="@+id/editor_times_list_view_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
+
         style="@style/Times"
         tools:text="16:00" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_swipe_arrows"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_centerVertical="true" />
 
 </RelativeLayout>

@@ -14,7 +14,7 @@ import java.util.*
 
 /* Extension Functions */
 fun Boolean.toInt() = if (this) 1 else 0
-fun <T> List<T>.hasDuplicates() = if (this.size == 1) 1 else 0
+//fun <T> List<T>.hasDuplicates() =
 
 object AlarmUtils {
 
@@ -25,7 +25,7 @@ object AlarmUtils {
      * @param context Activity Context
      * @param groupId The ID of the group
      */
-    fun setGroupAlarms(context: Context, groupId: Int) {
+    fun setGroupAlarms(context: Context, groupId: Int, dayOfWeek: Int? = null, nextWeek: Boolean = false) {
         val alarmProjection = arrayOf(AlarmTimeEntry.COLUMN_ID,
                 AlarmTimeEntry.COLUMN_TIME)
         val alarmCursor = context.contentResolver.query(AlarmTimeEntry.CONTENT_URI,
@@ -34,17 +34,22 @@ object AlarmUtils {
                 arrayOf(groupId.toString()),
                 null)
 
-        val groupProjection = arrayOf(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK)
-        val groupCursor = context.contentResolver.query(AlarmGroupEntry.CONTENT_URI,
-                groupProjection,
-                "${AlarmGroupEntry.COLUMN_ID}=?",
-                arrayOf(groupId.toString()),
-                null)
+        val daysOfWeek: List<Int>
+        if (dayOfWeek == null) {
+            val groupProjection = arrayOf(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK)
+            val groupCursor = context.contentResolver.query(AlarmGroupEntry.CONTENT_URI,
+                    groupProjection,
+                    "${AlarmGroupEntry.COLUMN_ID}=?",
+                    arrayOf(groupId.toString()),
+                    null)
 
-        groupCursor.moveToFirst()
-        val daysOfWeekString = groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK))
-        val daysOfWeek = getDOWArray(daysOfWeekString)
-        groupCursor.close()
+            groupCursor.moveToFirst()
+            val daysOfWeekString = groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK))
+            daysOfWeek = getDOWArray(daysOfWeekString)
+            groupCursor.close()
+        } else {
+            daysOfWeek = listOfSpecificDay(dayOfWeek)
+        }
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         var time: Int
@@ -52,7 +57,7 @@ object AlarmUtils {
         while (alarmCursor.moveToNext()) {
             time = alarmCursor.getInt(alarmCursor.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
             timeId = alarmCursor.getInt(alarmCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID))
-            setAlarm(context.applicationContext, time, timeId, groupId, daysOfWeek, alarmManager)
+            setAlarm(context.applicationContext, time, timeId, groupId, daysOfWeek, alarmManager, nextWeek = nextWeek)
         }
 
         alarmCursor.close()
@@ -67,7 +72,7 @@ object AlarmUtils {
      * @param daysOfWeek    The Days of Week in which the Alarm should repeat - no repeating days will result in a one-time alarm
      * @param alarmManager  AlarmManager: An AlarmManager instance
      */
-    fun setAlarm(appContext: Context, time: Int, timeId: Int, groupId: Int, daysOfWeek: List<Int>, alarmManager: AlarmManager, specificAlarmTime: Calendar? = null) {
+    fun setAlarm(appContext: Context, time: Int, timeId: Int, groupId: Int, daysOfWeek: List<Int>, alarmManager: AlarmManager, specificAlarmTime: Calendar? = null, nextWeek: Boolean = false) {
         val now = Calendar.getInstance()
 
         var alarmTime = specificAlarmTime ?: Calendar.getInstance().apply {
@@ -118,9 +123,13 @@ object AlarmUtils {
                     set(Calendar.HOUR_OF_DAY, minutesInDayToHours(time).toInt())
                     set(Calendar.MINUTE, minutesInDayToMinutes(time).toInt())
                     set(Calendar.SECOND, 0)
+                    set(Calendar.DAY_OF_WEEK, i+1)
+                    //Log.i(LOG_TAG, daysOfWeek.toString())
+                    if (nextWeek == true) {
+                        add(Calendar.DAY_OF_YEAR, 7)
+                    }
                 }
-                Log.i(LOG_TAG, daysOfWeek.toString())
-                alarmTime.set(Calendar.DAY_OF_WEEK, i+1)
+
                 if (daysOfWeek[i] == 1) { // Set Repeating for a certain day
                     Log.i(LOG_TAG, "Day of week(i) = $i (${i+1})")
                     Log.i(LOG_TAG, "System.currentTimeMillis(): ${System.currentTimeMillis()}, alarmTime.timeInMillis: ${alarmTime.timeInMillis}")
@@ -224,7 +233,8 @@ object AlarmUtils {
                 null)
 
         while(timeCursor.moveToNext()) {
-            cancelAlarm(context, timeCursor.getInt(timeCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID)), daysOfWeek)
+            val timeId = timeCursor.getInt(timeCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID))
+            cancelAlarm(context, timeId, daysOfWeek)
         }
 
         timeCursor.close()
@@ -245,12 +255,13 @@ object AlarmUtils {
             for (i in 0 until daysOfWeek.size-1) {
                 if (daysOfWeek[i] == 1) {
                     pendingIntent = PendingIntent.getBroadcast(appContext,
-                            "$timeId${i + 1}".toInt(),
+                            "$timeId${i+1}".toInt(),
                             Intent(appContext, AlarmBroadcastReceiver::class.java),
                             PendingIntent.FLAG_UPDATE_CURRENT)
 
                     alarmManager.cancel(pendingIntent)
                     pendingIntent.cancel()
+                    Log.i(LOG_TAG, "Alarm canceled [$timeId${i+1}]")
                 }
             }
         } else {
@@ -337,6 +348,12 @@ object AlarmUtils {
                     } else {
                         nextAlarmString += context.getString(R.string.main_in_days, days)
                     }
+                } else if (days == 7) {
+                    if (hours <= 0) {
+                        hours += 24
+                        days -= 1
+                        nextAlarmString += context.getString(R.string.main_in_days, days)
+                    }
                 } else {
                     nextAlarmString += context.getString(R.string.main_in_days, days)
                 }
@@ -379,13 +396,15 @@ object AlarmUtils {
                         if (active == 1) {
                            // if (i+1 >= currentDayOfWeek) {
                             val timeCursor = context.contentResolver.query(AlarmTimeEntry.CONTENT_URI,
-                                    arrayOf(AlarmTimeEntry.COLUMN_TIME),
+                                    arrayOf(AlarmTimeEntry.COLUMN_ID,
+                                            AlarmTimeEntry.COLUMN_TIME),
                                     "${AlarmTimeEntry.COLUMN_GROUP_ID}=?",
                                     arrayOf(groupId.toString()),
                                     AlarmTimeEntry.COLUMN_TIME)
 
                             while(timeCursor.moveToNext()) {
                                 calendar = Calendar.getInstance()
+                                val timeId = timeCursor.getInt(timeCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID))
                                 val cursorClosestTime = timeCursor.getInt(timeCursor.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
                                 calendar.apply {
                                     set(Calendar.HOUR_OF_DAY, minutesInDayToHours(cursorClosestTime).toInt())
@@ -394,11 +413,12 @@ object AlarmUtils {
                                     set(Calendar.DAY_OF_WEEK, i+1)
                                 }
 
-                                if (calendar.before(Calendar.getInstance())) {
+                                if (calendar.before(Calendar.getInstance()) || !isAlarmExist(context.applicationContext, "$timeId${i+1}".toInt())) {
                                     calendar.add(Calendar.DAY_OF_YEAR, 7)
                                 }
 
                                 if (closestCalendar == null || calendar.before(closestCalendar)) {
+
                                     closestCalendar = calendar
                                 }
                             }
@@ -457,5 +477,13 @@ object AlarmUtils {
             Log.i(LOG_TAG, "nextAlarm == null")
             return null
         }
+    }
+
+
+    private fun isAlarmExist(appContext: Context, alarmId: Int): Boolean {
+        return (PendingIntent.getBroadcast(appContext,
+                alarmId,
+                Intent(appContext, AlarmBroadcastReceiver::class.java),
+                PendingIntent.FLAG_NO_CREATE) != null)
     }
 }
