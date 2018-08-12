@@ -10,7 +10,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.activity_ringtone.*
-import kotlinx.android.synthetic.main.ringtone_entry.view.*
 
 
 class RingtoneActivity: AppCompatActivity() {
@@ -49,18 +48,18 @@ class RingtoneActivity: AppCompatActivity() {
             RecyclerView.Adapter<RingtoneAdapter.ViewHolder>() {
 
         inner class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
-            private val ringtoneNameTextView = view.ringtone_name_text_view
-            private val ringtoneRadioButton = view.ringtone_radio_button
+           /* private val ringtoneNameTextView = view.ringtone_name_text_view
+            private val ringtoneRadioButton = view.ringtone_radio_button*/
 
             fun update(position: Int) {
                 mCursor.moveToPosition(position)
 
-                ringtoneNameTextView.text = mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TITLE))
+                //ringtoneNameTextView.text = mCursor.getString(mCursor.getColumnIndex(MediaStore.Audio.Media.TITLE))
             }
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RingtoneAdapter.ViewHolder{
-            val view = LayoutInflater.from(mContext).inflate(R.layout.ringtone_entry, parent, false)
+            val view = LayoutInflater.from(mContext).inflate(R.layout.ringtone_item_entry, parent, false)
             return ViewHolder(view)
         }
 

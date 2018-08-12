@@ -18,7 +18,8 @@
         android:theme="@style/AppTheme"
         tools:replace="android:icon">
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -34,14 +35,18 @@
                 android:value="com.waker.MainActivity" />
         </activity>
 
-        <activity android:name=".AdvancedSettingsActivity">
+        <activity android:name=".AdvancedSettingsActivity"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.waker.AlarmEditorActivity" />
         </activity>
 
-        <activity android:name=".AlarmActivity" />
+        <activity android:name=".AlarmActivity"
+            android:screenOrientation="portrait"/>
         <activity android:name=".RingtoneActivity" />
+        <activity android:name=".ChooseRingtoneActivity"
+            android:screenOrientation="portrait"/>
 
 
         <provider

@@ -11,24 +11,21 @@
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:descendantFocusability="blocksDescendants"
         android:background="?attr/selectableItemBackground"
+        android:descendantFocusability="blocksDescendants"
         android:padding="6dp">
 
         <TextView
-            android:id="@+id/group_entry_name"
+            android:id="@+id/group_entry_alarm_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:layout_marginLeft="12dp"
-            android:layout_marginStart="12dp"
-            android:layout_marginTop="16dp"
-            android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@id/group_entry_first_layout"
-            app:layout_constraintStart_toEndOf="@+id/group_entry_expand"
+            android:layout_marginBottom="4dp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintBottom_toTopOf="@+id/group_entry_first_layout"
+            app:layout_constraintStart_toStartOf="@+id/group_entry_first_layout"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0"
-            tools:text="Name" />
+            android:text="Alarm name"
+            tools:text="Alarm name" />
 
         <ImageButton
             android:id="@+id/group_entry_expand"
@@ -41,7 +38,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.5"
-            app:srcCompat="@drawable/ic_expand_more"/>
+            app:srcCompat="@drawable/ic_expand_more" />
 
         <LinearLayout
             android:id="@+id/group_entry_first_layout"
@@ -54,19 +51,12 @@
             app:layout_constraintStart_toEndOf="@+id/group_entry_expand">
 
             <TextView
-                android:id="@+id/group_entry_text_view_first"
-                style="@style/GroupEntrySubtitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/group_entry_first" />
-
-            <TextView
                 android:id="@+id/group_entry_start_time"
                 style="@style/GroupEntryTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="16:00"
-                android:layout_marginTop="-6dp"/>
+                android:layout_marginTop="-6dp"
+                tools:text="16:00" />
 
         </LinearLayout>
 
@@ -82,21 +72,14 @@
             app:layout_constraintStart_toEndOf="@+id/group_entry_first_layout">
 
             <TextView
-                android:id="@+id/text_view_last"
-                style="@style/GroupEntrySubtitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/group_entry_last" />
-
-            <TextView
                 android:id="@+id/group_entry_end_time"
                 style="@style/GroupEntryTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="-6dp"
                 app:layout_constraintBottom_toTopOf="@+id/group_entry_days_of_week"
                 app:layout_constraintStart_toStartOf="@+id/text_view_last"
-                tools:text="17:00"
-                android:layout_marginTop="-6dp"/>
+                tools:text="17:00" />
 
         </LinearLayout>
 
@@ -129,11 +112,26 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
             android:layout_marginRight="16dp"
+            android:contentDescription="@string/description_sound_is_on"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/group_entry_switch"
             app:layout_constraintTop_toTopOf="parent"
-            tools:srcCompat="@drawable/ic_volume_up"
-            android:contentDescription="@string/description_sound_is_on" />
+            tools:srcCompat="@drawable/ic_volume_up" />
+
+
+        <TextView
+            android:id="@+id/group_entry_tilda"
+            style="@style/GroupEntryTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginStart="8dp"
+            android:text="~"
+            app:layout_constraintBottom_toBottomOf="@+id/group_entry_first_layout"
+            app:layout_constraintEnd_toStartOf="@+id/group_entry_last_layout"
+            app:layout_constraintStart_toEndOf="@+id/group_entry_first_layout" />
 
     </android.support.constraint.ConstraintLayout>
 

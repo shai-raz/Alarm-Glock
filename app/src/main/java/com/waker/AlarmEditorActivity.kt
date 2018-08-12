@@ -9,19 +9,21 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.support.design.widget.FloatingActionButton
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
-import android.support.v4.widget.NestedScrollView
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.SwitchCompat
 import android.support.v7.widget.helper.ItemTouchHelper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -35,7 +37,7 @@ import kotlinx.android.synthetic.main.editor_times_entry.view.*
 import java.util.*
 
 
-private const val SELECT_RINGTONE_RESULTS = 1
+const val SELECT_RINGTONE_RESULTS = 1
 private const val PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 2
 private const val ADVANCED_SETTINGS_RESULTS = 3
 
@@ -45,7 +47,7 @@ class AlarmEditorActivity: AppCompatActivity() {
 
     private lateinit var mCancelButton: ImageButton
     private lateinit var mSaveButton: ImageButton
-    private lateinit var mScrollView: NestedScrollView
+    //private lateinit var mScrollView: NestedScrollView
     private lateinit var mAlarmNameEditText: EditText
     private lateinit var mSoundSwitch: SwitchCompat
     private lateinit var mPickRingtoneButton: LinearLayout
@@ -53,9 +55,7 @@ class AlarmEditorActivity: AppCompatActivity() {
     private lateinit var mDaysOfWeekToggle: Array<ToggleButton>
     private lateinit var mAdvancedButton: Button
     private lateinit var mTimesRecyclerView: RecyclerView
-    private lateinit var mAddTimeButton: ImageButton
-    //private lateinit var mCancelButton: Button
-    //private lateinit var mSaveButton: Button
+    private lateinit var mAddTimeButton: FloatingActionButton
 
     private lateinit var mAlarmManager: AlarmManager
     private lateinit var mLayoutManager: LinearLayoutManager
@@ -79,7 +79,6 @@ class AlarmEditorActivity: AppCompatActivity() {
         // Widgets
         mCancelButton = editor_toolbar_cancel
         mSaveButton = editor_toolbar_done
-        mScrollView = editor_scroll_view
         mAlarmNameEditText = editor_name_edit_text
         mSoundSwitch = editor_sound_switch
         mPickRingtoneButton = editor_pick_ringtone
@@ -87,9 +86,8 @@ class AlarmEditorActivity: AppCompatActivity() {
         mAdvancedButton = editor_advanced_settings_button
         mTimesRecyclerView = editor_times_recycler_view
         mAddTimeButton = editor_add_time_button
-        //mCancelButton = editor_cancel_button
-        //mSaveButton = editor_save_button
 
+        //Log.i(LOG_TAG, "getRingtone: ${getRingtone()}")
 
         mSoundSwitch.setOnClickListener {
             if (!mSoundSwitch.isEnabled) {
@@ -130,8 +128,16 @@ class AlarmEditorActivity: AppCompatActivity() {
                 }
                 dialog.show()
             } else {
-                val ringtoneIntent = Intent(Intent.ACTION_PICK, android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
-                startActivityForResult(ringtoneIntent, SELECT_RINGTONE_RESULTS)
+                val intent = Intent(this, ChooseRingtoneActivity::class.java)
+                startActivityForResult(intent, SELECT_RINGTONE_RESULTS)
+                /*val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+                intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Select ringtone for notifications:")
+                intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                intent.putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                startActivityForResult(intent, SELECT_RINGTONE_RESULTS)*/
+                /*val ringtoneIntent = Intent(Intent.ACTION_PICK, android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
+                startActivityForResult(ringtoneIntent, SELECT_RINGTONE_RESULTS)*/
             }
         }
 
@@ -243,6 +249,7 @@ class AlarmEditorActivity: AppCompatActivity() {
             when (requestCode) {
                 SELECT_RINGTONE_RESULTS -> {
                     ringtoneUri = data!!.data
+                    Log.i(LOG_TAG, "ringtoneUri: $ringtoneUri")
 
                     val ringtoneCursor = contentResolver.query(
                             ringtoneUri,
@@ -265,7 +272,7 @@ class AlarmEditorActivity: AppCompatActivity() {
             }
         } else {
             if (requestCode == SELECT_RINGTONE_RESULTS) {
-                Toast.makeText(this, getString(R.string.editor_no_ringtone_chosen), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.editor_no_ringtone_was_chosen), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -329,7 +336,6 @@ class AlarmEditorActivity: AppCompatActivity() {
                 true)
         timePickerDialog.show()
 
-        mScrollView.smoothScrollTo(0, mScrollView.bottom)
     }
 
     /**
@@ -481,5 +487,24 @@ class AlarmEditorActivity: AppCompatActivity() {
             }
         }
         return false
+    }
+
+    private fun getRingtone(): List<Uri> {
+        val ringtoneManager = RingtoneManager(this)
+        ringtoneManager.setType(RingtoneManager.TYPE_ALARM)
+        val cursor = ringtoneManager.cursor
+
+        val ringtoneMap = mutableMapOf<String,String>()
+        val list = mutableListOf<Uri>()
+        while (cursor.moveToNext()) {
+            val pos = cursor.position
+            list.add(pos, ringtoneManager.getRingtoneUri(pos))
+            Log.i(LOG_TAG, "title : ${ringtoneManager.getRingtone(pos).getTitle(this)}")
+            /*val notificationTitle = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX)
+            val notificationUri = cursor.getString(RingtoneManager.URI_COLUMN_INDEX)
+            ringtoneMap[notificationTitle] = notificationUri*/
+        }
+
+        return list
     }
 }

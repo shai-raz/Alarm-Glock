@@ -19,13 +19,19 @@
     <string name="editor_alarm_name">Alarm Name</string>
     <string name="editor_sound">Sound</string>
     <string name="editor_pick_ringtone">Pick a ringtone</string>
+    <string name="editor_no_ringtone_chosen">No ringtone chosen</string>
     <string name="editor_add_time_button">Add time</string>
     <string name="editor_advanced_settings_button">Advanced Settings</string>
-    <string name="editor_no_ringtone_chosen">No ringtone was chosen</string>
+    <string name="editor_no_ringtone_was_chosen">No ringtone was chosen</string>
     <!-- Advanced Settings -->
     <string name="editor_vibrate">Vibrate</string>
     <string name="editor_alarm_volume">Alarm volume</string>
     <string name="editor_snooze_duration">Snooze duration</string>
+
+    <!-- Ringtone Chooser -->
+    <string name="ringtone_chooser_choose_from_local_music">Choose from local music</string>
+    <string name="ringtone_chooser_no_local_ringtone_chosen">No local ringtone chosen</string>
+    <string name="ringtone_chooser_please_choose_a_ringtone_first">Please choose a ringtone first</string>
 
     <!-- Alarm -->
     <string name="alarm_dismiss_group">DISMISS GROUP</string>

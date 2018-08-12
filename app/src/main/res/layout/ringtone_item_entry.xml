@@ -1,27 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
+    android:id="@+id/ringtone_entry_layout"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="8dp">
+    android:layout_height="wrap_content"
+    android:paddingRight="8dp"
+    android:paddingLeft="8dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:descendantFocusability="beforeDescendants"
+    android:background="?attr/selectableItemBackground">
 
     <TextView
-        android:id="@+id/ringtone_name_text_view"
+        android:id="@+id/ringtone_entry_name_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentLeft="true"
+        style="@style/EditorTextView"
         tools:text="Avenged Sevenfold - Gunslinger"/>
 
     <RadioButton
-        android:id="@+id/ringtone_radio_button"
+        android:id="@+id/ringtone_entry_radio_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true" />
+        android:layout_alignParentRight="true"
+        android:clickable="false"
+        android:focusable="false"/>
 
 </RelativeLayout>

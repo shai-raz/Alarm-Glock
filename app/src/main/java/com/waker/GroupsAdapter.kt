@@ -75,12 +75,13 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
         private val groupLayout: LinearLayout = view.group_entry_layout
         //private val groupLayout: ConstraintLayout = view.group_entry_layout
         private val groupExpandButton: ImageButton = view.group_entry_expand
-        private val groupNameTextView: TextView = view.group_entry_name
+        private val groupNameTextView: TextView = view.group_entry_alarm_name
         //private val groupFirstTimeLayout: LinearLayout = view.group_entry_first_layout
         private val groupLastTimeLayout: LinearLayout = view.group_entry_last_layout
-        private val groupFirstTextView: TextView = view.group_entry_text_view_first
+        //private val groupFirstTextView: TextView = view.group_entry_text_view_first
         private val groupFirstTimeTextView: TextView = view.group_entry_start_time
         private val groupLastTimeTextView = view.group_entry_end_time
+        private val groupTilda: TextView = view.group_entry_tilda
         private val groupSwitch: SwitchCompat = view.group_entry_switch
         private val groupSoundIndicatorImageView: ImageView = view.group_entry_sound_indicator
         private val groupDOWTextView: TextView = view.group_entry_days_of_week
@@ -110,11 +111,12 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
                     groupExpandButton.setImageResource(if(isExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more)
                     groupExpandableRecyclerView.visibility = if(isExpanded) View.VISIBLE else View.GONE
                     groupExpandableRecyclerView.layoutManager = LinearLayoutManager(mContext, LinearLayoutManager.VERTICAL, false)
-                    groupExpandableRecyclerView.adapter = TimesAdapater(mContext, groupTimes)
+                    groupExpandableRecyclerView.adapter = TimesAdapter(mContext, groupTimes)
                 }
             } else {
                 groupLastTimeLayout.visibility = View.GONE
-                groupFirstTextView.visibility = View.GONE
+                groupTilda.visibility = View.GONE
+                //groupFirstTextView.visibility = View.GONE
                 //groupExpandButton.visibility = View.INVISIBLE
                 groupExpandButton.setImageResource(R.drawable.ic_alarm_black)
                 groupExpandButton.setBackgroundResource(0)
@@ -277,8 +279,8 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
         notifyItemRemoved(position)
     }
 
-    private inner class TimesAdapater(private val mContext: Context, private var mCursor: Cursor):
-            RecyclerView.Adapter<TimesAdapater.ViewHolder>() {
+    private inner class TimesAdapter(private val mContext: Context, private var mCursor: Cursor):
+            RecyclerView.Adapter<TimesAdapter.ViewHolder>() {
 
         inner class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
             val groupTimeTextView: TextView = view.group_time
@@ -291,7 +293,7 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
             }
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TimesAdapater.ViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TimesAdapter.ViewHolder {
             val view = LayoutInflater.from(mContext).inflate(R.layout.group_time_entry, parent, false)
             return ViewHolder(view)
         }

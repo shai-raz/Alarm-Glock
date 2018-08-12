@@ -49,205 +49,182 @@
 
     </android.support.v7.widget.Toolbar>
 
-    <View style="@style/dividerHorizontal"/>
 
-    <android.support.v4.widget.NestedScrollView
-        android:id="@+id/editor_scroll_view"
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/editor_toolbar">
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            android:paddingBottom="8dp">
-
-
-            <LinearLayout
-                android:id="@+id/editor_settings_layout"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-
-                <android.support.design.widget.TextInputLayout
-                    android:id="@+id/text_input_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:layout_marginBottom="@dimen/editor_settings_layout_margin">
-
-                    <EditText
-                        android:id="@+id/editor_name_edit_text"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/editor_alarm_name"
-                        android:inputType="textCapSentences"
-                        android:padding="12dp" />
-
-                </android.support.design.widget.TextInputLayout>
-
-                <View style="@style/dividerHorizontal" />
-
-                <RelativeLayout
-                    style="@style/EditorSetting"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        style="@style/EditorTextView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentLeft="true"
-                        android:layout_alignParentStart="true"
-                        android:layout_centerVertical="true"
-                        android:text="@string/editor_sound" />
-
-                    <android.support.v7.widget.SwitchCompat
-                        android:id="@+id/editor_sound_switch"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_alignParentRight="true"
-                        android:layout_centerVertical="true"
-                        android:checked="false"
-                        android:enabled="false" />
-                </RelativeLayout>
-
-                <View style="@style/dividerHorizontal" />
-
-                <LinearLayout
-                    android:id="@+id/editor_pick_ringtone"
-                    style="@style/EditorSetting"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?android:attr/selectableItemBackground"
-                    android:orientation="vertical">
-
-                    <TextView
-                        style="@style/EditorTextView"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/editor_pick_ringtone" />
-
-                    <TextView
-                        android:id="@+id/editor_ringtone_text_view"
-                        style="@style/EditorSubtitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Ringtone Name" />
-                </LinearLayout>
-
-                <View style="@style/dividerHorizontal" />
-
-                <!-- Days in week -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/editor_settings_layout_margin">
-
-                    <ToggleButton
-                        android:id="@+id/editor_toggle_sunday"
-                        style="@style/DayInWeekToggleButton"
-                        android:textOff="@string/editor_toggle_sunday"
-                        android:textOn="@string/editor_toggle_sunday" />
-
-                    <ToggleButton
-                        android:id="@+id/editor_toggle_monday"
-                        style="@style/DayInWeekToggleButton"
-                        android:textOff="@string/editor_toggle_monday"
-                        android:textOn="@string/editor_toggle_monday" />
-
-                    <ToggleButton
-                        android:id="@+id/editor_toggle_tuesday"
-                        style="@style/DayInWeekToggleButton"
-                        android:textOff="@string/editor_toggle_tuesday"
-                        android:textOn="@string/editor_toggle_tuesday" />
-
-                    <ToggleButton
-                        android:id="@+id/editor_toggle_wednesday"
-                        style="@style/DayInWeekToggleButton"
-                        android:textOff="@string/editor_toggle_wednesday"
-                        android:textOn="@string/editor_toggle_wednesday" />
-
-                    <ToggleButton
-                        android:id="@+id/editor_toggle_thursday"
-                        style="@style/DayInWeekToggleButton"
-                        android:textOff="@string/editor_toggle_thursday"
-                        android:textOn="@string/editor_toggle_thursday" />
-
-                    <ToggleButton
-                        android:id="@+id/editor_toggle_friday"
-                        style="@style/DayInWeekToggleButton"
-                        android:textOff="@string/editor_toggle_friday"
-                        android:textOn="@string/editor_toggle_friday" />
-
-                    <ToggleButton
-                        android:id="@+id/editor_toggle_saturday"
-                        style="@style/DayInWeekToggleButton"
-                        android:textOff="@string/editor_toggle_saturday"
-                        android:textOn="@string/editor_toggle_saturday" />
-                </LinearLayout>
-
-                <Button
-                    android:id="@+id/editor_advanced_settings_button"
-                    style="@style/EditorButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/editor_advanced_settings_button" />
-
-            </LinearLayout>
-
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/editor_times_recycler_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="160dp"
-                android:scrollbars="vertical"
-                android:layout_below="@id/editor_settings_layout" />
-
-            <ImageButton
-                android:id="@+id/editor_add_time_button"
-                android:layout_below="@id/editor_times_recycler_view"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentRight="true"
-                android:layout_marginTop="8dp"
-                style="@style/AddTimeButton"
-                app:srcCompat="@drawable/ic_add"/>
-
-
-        </RelativeLayout>
-
-    </android.support.v4.widget.NestedScrollView>
-
-    <!--<LinearLayout
-        android:id="@+id/editor_buttons_layout"
+    <LinearLayout
+        android:id="@+id/editor_settings_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_below="@id/editor_toolbar"
+        android:padding="8dp">
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/text_input_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="@dimen/editor_settings_layout_margin">
+
+            <EditText
+                android:id="@+id/editor_name_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/editor_alarm_name"
+                android:inputType="textCapSentences"
+                android:padding="12dp" />
+
+        </android.support.design.widget.TextInputLayout>
+
+        <View style="@style/dividerHorizontal" />
+
+        <RelativeLayout
+            style="@style/EditorSetting"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                style="@style/EditorTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:text="@string/editor_sound" />
+
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/editor_sound_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:checked="false"
+                android:enabled="false" />
+        </RelativeLayout>
+
+        <View style="@style/dividerHorizontal" />
+
+        <LinearLayout
+            android:id="@+id/editor_pick_ringtone"
+            style="@style/EditorSetting"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?android:attr/selectableItemBackground"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/EditorTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/editor_pick_ringtone" />
+
+            <TextView
+                android:id="@+id/editor_ringtone_text_view"
+                style="@style/EditorSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/editor_no_ringtone_chosen" />
+        </LinearLayout>
+
+        <View style="@style/dividerHorizontal" />
+
+        <!-- Days in week -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/editor_settings_layout_margin">
+
+            <!--<com.waker.data.SquareToggleButton
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textOff="@string/editor_toggle_sunday"
+                android:textOn="@string/editor_toggle_sunday"
+                android:background="@drawable/round_toggle_button"/>-->
+
+            <ToggleButton
+                android:id="@+id/editor_toggle_sunday"
+                style="@style/DayInWeekToggleButton"
+                android:textOff="@string/editor_toggle_sunday"
+                android:textOn="@string/editor_toggle_sunday" />
+
+            <ToggleButton
+                android:id="@+id/editor_toggle_monday"
+                style="@style/DayInWeekToggleButton"
+                android:textOff="@string/editor_toggle_monday"
+                android:textOn="@string/editor_toggle_monday" />
+
+            <ToggleButton
+                android:id="@+id/editor_toggle_tuesday"
+                style="@style/DayInWeekToggleButton"
+                android:textOff="@string/editor_toggle_tuesday"
+                android:textOn="@string/editor_toggle_tuesday" />
+
+            <ToggleButton
+                android:id="@+id/editor_toggle_wednesday"
+                style="@style/DayInWeekToggleButton"
+                android:textOff="@string/editor_toggle_wednesday"
+                android:textOn="@string/editor_toggle_wednesday" />
+
+            <ToggleButton
+                android:id="@+id/editor_toggle_thursday"
+                style="@style/DayInWeekToggleButton"
+                android:textOff="@string/editor_toggle_thursday"
+                android:textOn="@string/editor_toggle_thursday" />
+
+            <ToggleButton
+                android:id="@+id/editor_toggle_friday"
+                style="@style/DayInWeekToggleButton"
+                android:textOff="@string/editor_toggle_friday"
+                android:textOn="@string/editor_toggle_friday" />
+
+            <ToggleButton
+                android:id="@+id/editor_toggle_saturday"
+                style="@style/DayInWeekToggleButton"
+                android:textOff="@string/editor_toggle_saturday"
+                android:textOn="@string/editor_toggle_saturday" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/editor_advanced_settings_button"
+            style="@style/EditorButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/editor_advanced_settings_button" />
+
+    </LinearLayout>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/editor_times_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:minHeight="160dp"
+        android:scrollbars="vertical"
+        android:layout_below="@id/editor_settings_layout" />
+
+    <!--<ImageButton
+        android:id="@+id/editor_add_time_button"
+        android:layout_below="@id/editor_times_recycler_view"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="8dp"
+        style="@style/AddTimeButton"
+        app:srcCompat="@drawable/ic_add"/>-->
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/editor_add_time_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_add"
         android:layout_alignParentBottom="true"
-        style="?android:attr/buttonBarStyle">
-
-        <Button
-            android:id="@+id/editor_cancel_button"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="@string/editor_cancel_button"
-            style="?android:attr/buttonBarButtonStyle"/>
-        <Button
-            android:id="@+id/editor_save_button"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="@string/editor_save_button"
-            style="?android:attr/buttonBarButtonStyle"/>
-
-    </LinearLayout>-->
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_margin="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:rippleColor="@color/gray_btn_bg_pressed_color" />
 
 </RelativeLayout>

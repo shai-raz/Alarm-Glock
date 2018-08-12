@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/editor_pick_ringtone"
+    style="@style/EditorSetting"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:paddingRight="8dp"
+    android:paddingLeft="8dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp">
+
+    <TextView
+        android:id="@+id/ringtone_chooser_local_ringtone_text_view"
+        style="@style/EditorTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/ringtone_chooser_choose_from_local_music" />
+
+    <TextView
+        android:id="@+id/ringtone_chooser_local_ringtone_name_text_view"
+        style="@style/EditorSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/ringtone_chooser_no_local_ringtone_chosen"
+        android:layout_below="@id/ringtone_chooser_local_ringtone_text_view"/>
+
+    <RadioButton
+        android:id="@+id/ringtone_chooser_local_ringtone_radio_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true" />
+</RelativeLayout>
