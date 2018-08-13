@@ -30,8 +30,8 @@ class AdvancedSettingsActivity: AppCompatActivity() {
     private lateinit var mVolumeImage: ImageView
     private lateinit var mVolumeSeekBar: SeekBar
     private lateinit var mSnoozeDurationNumberPicker: NumberPicker
-    private lateinit var mCancelButton: Button
-    private lateinit var mSaveButton: Button
+    private lateinit var mCancelButton: ImageButton
+    private lateinit var mSaveButton: ImageButton
 
     private lateinit var mAudioManager: AudioManager
     private var mMediaPlayer: MediaPlayer? = null
@@ -55,8 +55,8 @@ class AdvancedSettingsActivity: AppCompatActivity() {
         mVolumeImage = advanced_editor_alarm_volume_image
         mVolumeSeekBar = advanced_editor_volume_seek_bar
         mSnoozeDurationNumberPicker = advanced_editor_snooze_number_picker
-        mCancelButton = advanced_editor_cancel_button
-        mSaveButton = advanced_editor_save_button
+        mCancelButton = advanced_editor_toolbar_cancel
+        mSaveButton = advanced_editor_toolbar_save
 
         mVolumeSeekBar.max = 100
         mVolumeSeekBar.progress = volume
@@ -138,6 +138,11 @@ class AdvancedSettingsActivity: AppCompatActivity() {
         if (ringtoneUri != Uri.EMPTY) {
             mMediaPlayer = MediaPlayer.create(this@AdvancedSettingsActivity, ringtoneUri)
         }
+    }
+
+    override fun onBackPressed() {
+        stopTheMusic()
+        super.onBackPressed()
     }
 
     private fun populateExistingAlarm() {

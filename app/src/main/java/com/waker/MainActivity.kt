@@ -17,6 +17,7 @@ import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.view.View
+import android.view.animation.AnimationUtils
 import android.widget.TextView
 import cn.pedant.SweetAlert.SweetAlertDialog
 import com.facebook.stetho.Stetho
@@ -77,6 +78,8 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
         mGroupsRecyclerView = groups_recyclerview
         mEmptyView = groups_empty_view
         mFab = add_group_fab
+
+        mFab.startAnimation(AnimationUtils.loadAnimation(this, R.anim.add_group_fab_show))
 
         mGroupsRecyclerView.addItemDecoration(DividerItemDecoration(this, 1))
         mGroupsRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)

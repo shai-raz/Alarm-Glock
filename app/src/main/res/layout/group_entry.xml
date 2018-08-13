@@ -24,7 +24,6 @@
             app:layout_constraintBottom_toTopOf="@+id/group_entry_first_layout"
             app:layout_constraintStart_toStartOf="@+id/group_entry_first_layout"
             app:layout_constraintTop_toTopOf="parent"
-            android:text="Alarm name"
             tools:text="Alarm name" />
 
         <ImageButton

@@ -13,6 +13,7 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.support.design.widget.CoordinatorLayout
 import android.support.design.widget.FloatingActionButton
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
@@ -27,6 +28,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import android.widget.*
 import cn.pedant.SweetAlert.SweetAlertDialog
 import com.waker.data.AlarmContract
@@ -55,7 +57,9 @@ class AlarmEditorActivity: AppCompatActivity() {
     private lateinit var mDaysOfWeekToggle: Array<ToggleButton>
     private lateinit var mAdvancedButton: Button
     private lateinit var mTimesRecyclerView: RecyclerView
+    private lateinit var mFABCoordinator: CoordinatorLayout
     private lateinit var mAddTimeButton: FloatingActionButton
+    private lateinit var mAddGroupTimeButton: FloatingActionButton
 
     private lateinit var mAlarmManager: AlarmManager
     private lateinit var mLayoutManager: LinearLayoutManager
@@ -85,7 +89,11 @@ class AlarmEditorActivity: AppCompatActivity() {
         mPickRingtoneTextView = editor_ringtone_text_view
         mAdvancedButton = editor_advanced_settings_button
         mTimesRecyclerView = editor_times_recycler_view
-        mAddTimeButton = editor_add_time_button
+        mFABCoordinator = editor_fab_coordinator
+        mAddTimeButton = editor_add_time_fab
+        mAddGroupTimeButton = editor_add_group_time_fab
+        //mAddGroupTimeButton.startAnimation(AnimationUtils.loadAnimation(this, R.anim.add_time_fab_show)) // Use when clicking add time fab to add group times
+        mAddTimeButton.startAnimation(AnimationUtils.loadAnimation(this, R.anim.add_time_fab_show))
 
         //Log.i(LOG_TAG, "getRingtone: ${getRingtone()}")
 
@@ -168,7 +176,7 @@ class AlarmEditorActivity: AppCompatActivity() {
                 val old = mTimesList[pos]
                 mTimesList.removeAt(pos)
                 mTimesAdapter.notifyItemRemoved(pos)
-                Snackbar.make(mTimesRecyclerView, "Removed", Snackbar.LENGTH_SHORT)
+                Snackbar.make(mFABCoordinator, "Removed", Snackbar.LENGTH_SHORT)
                         .addCallback(object: Snackbar.Callback() {
                             override fun onDismissed(snackbar: Snackbar, event: Int) {
                                 when (event) {
@@ -319,23 +327,27 @@ class AlarmEditorActivity: AppCompatActivity() {
     }
 
     private fun addTime() {
-        mTimesList.add(0)
-        val position = mTimesList.size-1
-        mTimesAdapter.notifyItemInserted(position)
-
         val now = Calendar.getInstance()
         val hours = now.get(Calendar.HOUR_OF_DAY)
         val minutes = now.get(Calendar.MINUTE)
 
+        val onTimeSetListener = TimePickerDialog.OnTimeSetListener { _, selectedHour, selectedMin ->
+            mTimesList.add(AlarmUtils.getMinutesInDay(selectedHour, selectedMin))
+            mTimesAdapter.notifyItemInserted(mTimesList.size-1)
+        }
+
         val timePickerDialog = TimePickerDialog(this,
-                TimePickerDialog.OnTimeSetListener { _, selectedHour, selectedMin ->
-                    mTimesList[position] = AlarmUtils.getMinutesInDay(selectedHour, selectedMin)
-                    mTimesAdapter.notifyItemChanged(position) },
+                onTimeSetListener,
                 hours,
                 minutes,
                 true)
-        timePickerDialog.show()
 
+        timePickerDialog.setCanceledOnTouchOutside(true)
+        /*timePickerDialog.setOnDismissListener {
+            mTimesList.removeAt(mTimesList.size-1)
+        }*/
+
+        timePickerDialog.show()
     }
 
     /**
