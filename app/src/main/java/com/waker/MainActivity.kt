@@ -37,6 +37,7 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
     private lateinit var mFab: FloatingActionButton
     private lateinit var mGroupsAdapter: GroupsAdapter
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -55,7 +56,6 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
             }
             dialog.show()
         }
-
 
         //@PendingIntent TEST
         /*val content = mutableListOf<String>()
@@ -79,8 +79,6 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
         mEmptyView = groups_empty_view
         mFab = add_group_fab
 
-        mFab.startAnimation(AnimationUtils.loadAnimation(this, R.anim.add_group_fab_show))
-
         mGroupsRecyclerView.addItemDecoration(DividerItemDecoration(this, 1))
         mGroupsRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
 
@@ -92,6 +90,11 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
         mFab.setOnClickListener {
             startActivity(Intent(this, AlarmEditorActivity::class.java))
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        mFab.startAnimation(AnimationUtils.loadAnimation(this, R.anim.add_group_fab_show))
     }
 
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor> {
