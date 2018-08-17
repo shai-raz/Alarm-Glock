@@ -12,12 +12,12 @@
 
     <style name="EditorTextView" parent="Theme.AppCompat.Light">
         <item name="android:textSize">16sp</item>
-        <item name="android:textColor">@color/BodyTextView</item>
+        <item name="android:textColor">@color/bodyTextView</item>
     </style>
 
     <style name="EditorSubtitle">
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">@color/SubtitleTextView</item>
+        <item name="android:textColor">@color/subtitleTextView</item>
         <item name="android:alpha">.7</item>
     </style>
 
@@ -39,29 +39,41 @@
 
     <style name="GroupEntryTime">
         <item name="android:textSize">28sp</item>
-        <item name="android:textColor">@color/BodyTextView</item>
+        <item name="android:textColor">@color/bodyTextView</item>
         
     </style>
 
     <style name="GroupEntrySubtitle">
         <item name="android:textSize">12sp</item>
-        <item name="android:textColor">@color/SubtitleTextView</item>
+        <item name="android:textColor">@color/subtitleTextView</item>
         <item name="android:alpha">.7</item>
     </style>
 
     <style name="GroupEntryDaysOfWeek">
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">@color/DayOfWeekText</item>
+        <item name="android:textColor">@color/dayOfWeekText</item>
     </style>
 
     <style name="Times">
         <item name="android:textSize">20sp</item>
-        <item name="android:textColor">@color/TimesTextView</item>
+        <item name="android:textColor">@color/timesTextView</item>
     </style>
 
     <style name="GroupTimes">
         <item name="android:textSize">16sp</item>
-        <item name="android:textColor">@color/GroupTimesTextView</item>
+        <item name="android:textColor">@color/groupTimesTextView</item>
+    </style>
+
+
+    <!-- Alarm -->
+    <style name="SelectableItemTheme">
+        <item name="colorControlHighlight">#FFF</item>
+    </style>
+
+    <style name="AlarmButton">
+        <item name="android:theme">@style/SelectableItemTheme</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+        <item name="android:background">@drawable/alarm_button</item>
     </style>
 
     <!-- Divider -->

@@ -9,20 +9,17 @@
     <string name="main_in_hours">%1$d hours,&#160;</string>
     <string name="main_in_minutes">%1$d minutes,&#160;</string>
     <string name="main_in_seconds">%1$d seconds.</string>
-    <string name="group_entry_first">First</string>
-    <string name="group_entry_last">Last</string>
     <string name="group_entry_everyday">Everyday</string>
 
     <!-- Editor -->
-    <string name="editor_cancel_button">Cancel</string>
-    <string name="editor_save_button">Save</string>
     <string name="editor_alarm_name">Alarm Name</string>
     <string name="editor_sound">Sound</string>
     <string name="editor_pick_ringtone">Pick a ringtone</string>
     <string name="editor_no_ringtone_chosen">No ringtone chosen</string>
-    <string name="editor_add_time_button">Add time</string>
+    <string name="editor_time_removed">Removed</string>
     <string name="editor_advanced_settings_button">Advanced Settings</string>
     <string name="editor_no_ringtone_was_chosen">No ringtone was chosen</string>
+    <string name="editor_you_cant_set_2_alarms_to_the_same_time">You can\'t set 2 alarms at the same time!</string>
     <!-- Advanced Settings -->
     <string name="editor_vibrate">Vibrate</string>
     <string name="editor_alarm_volume">Alarm volume</string>
@@ -34,9 +31,9 @@
     <string name="ringtone_chooser_please_choose_a_ringtone_first">Please choose a ringtone first</string>
 
     <!-- Alarm -->
-    <string name="alarm_dismiss_group">DISMISS GROUP</string>
-    <string name="alarm_dismiss">DISMISS</string>
-    <string name="alarm_snooze">SNOOZE</string>
+    <string name="alarm_dismiss_group">Dismiss Group</string>
+    <string name="alarm_snooze">Snooze</string>
+    <string name="alarm_swipe_up_to_dismiss">Swipe up to dismiss</string>
     <string name="editor_toggle_sunday">S</string>
     <string name="editor_toggle_monday">M</string>
     <string name="editor_toggle_tuesday">T</string>
@@ -59,5 +56,4 @@
     <string name="description_expand_or_collapse">Expand or Collapse</string>
     <string name="description_sound_is_on">Sound is on</string>
     <string name="description_sound_is_off">Sound is off</string>
-
 </resources>

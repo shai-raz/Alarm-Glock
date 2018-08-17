@@ -11,22 +11,23 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <DigitalClock
-            android:id="@+id/alarm_clock_16"
+        <TextClock
+            android:id="@+id/alarm_clock"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             tools:text="16:41"
+            android:format24Hour="HH:mm"
             android:textSize="54sp"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="32dp"
-            android:textColor="@color/alarmWhiteForeground" />
+            android:textColor="@color/alarmWhiteForeground"/>
 
         <TextView
             android:id="@+id/alarm_name_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
-            android:layout_below="@id/alarm_clock_16"
+            android:layout_below="@id/alarm_clock"
             android:layout_marginTop="16dp"
             tools:text="Morning"
             android:textColor="@color/alarmWhiteForeground"/>

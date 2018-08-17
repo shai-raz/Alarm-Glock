@@ -222,6 +222,24 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:visibility="invisible">
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/editor_add_time_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_add"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            app:rippleColor="@color/grayButtonPressedColor" />
+    </android.support.design.widget.CoordinatorLayout>
+
+    <!-- two fabs -->
+    <!--<android.support.design.widget.CoordinatorLayout
+        android:id="@+id/editor_fab_coordinator"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:visibility="invisible">
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -248,6 +266,6 @@
                 android:focusable="true"
                 app:rippleColor="@color/gray_btn_bg_pressed_color" />
         </LinearLayout>
-    </android.support.design.widget.CoordinatorLayout>
+    </android.support.design.widget.CoordinatorLayout>-->
 
 </RelativeLayout>

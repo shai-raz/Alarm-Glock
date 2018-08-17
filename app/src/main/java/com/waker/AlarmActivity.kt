@@ -1,6 +1,9 @@
 package com.waker
 
+import android.annotation.SuppressLint
 import android.app.AlarmManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.ContentValues
 import android.content.Context
@@ -14,12 +17,13 @@ import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.support.v4.app.NotificationCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.view.View
-import android.view.WindowManager
-import android.widget.Button
-import android.widget.TextView
+import android.view.*
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
+import android.widget.*
 import com.waker.AlarmUtils.getMinutesInDay
 import com.waker.data.AlarmContract.AlarmGroupEntry
 import com.waker.data.AlarmContract.AlarmTimeEntry
@@ -27,21 +31,36 @@ import kotlinx.android.synthetic.main.alarm_layout.*
 import java.util.*
 
 
+private const val SWIPE_MAX_OFF_PATH = 250
+private const val SWIPE_MIN_DISTANCE = 200
+private const val SWIPE_THRESHOLD_VELOCITY = 200
+
+private const val SWIPE_TOO_SLOW = -1
+private const val DIRECTION_LEFT_TO_RIGHT = 0
+private const val DIRECTION_RIGHT_TO_LEFT = 1
+private const val DIRECTION_UPWARDS = 2
+private const val DIRECTION_DOWNWARDS = 3
+
 class AlarmActivity: AppCompatActivity() {
 
-    private val LOG_TAG = this.javaClass.simpleName!!
+    private val LOG_TAG = this.javaClass.simpleName
 
+    private lateinit var mAlarmLayout: RelativeLayout
+    private lateinit var mAlarmClock: View
     private lateinit var mAlarmNameTextView: TextView
     private lateinit var mDismissGroupButton: Button
     private lateinit var mSnoozeButton: Button
-    private lateinit var mDismissButton: Button
+    private lateinit var mDismissLayout: LinearLayout
+
+    private lateinit var mNotificationManager: NotificationManager
     private lateinit var mAudioManager: AudioManager
+    private lateinit var mCalendar: Calendar
+    private lateinit var mGestureDetector: GestureDetector
     private var mMediaPlayer: MediaPlayer? = null
     private var mVibrator: Vibrator? = null
+
+
     private lateinit var mDaysOfWeek: List<Int>
-
-    private lateinit var mCalendar: Calendar
-
     private var mGroupId = 0
     private var mTimeId = 0
     private var mIsRepeating = false
@@ -49,28 +68,60 @@ class AlarmActivity: AppCompatActivity() {
     private var mUserRingerMode: Int = AudioManager.RINGER_MODE_NORMAL
     private var mUserVolume: Int = 0
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN) // Make activity fullscreen
         setContentView(R.layout.alarm_layout)
 
         mGroupId = intent!!.getIntExtra("groupId", 0)
         mTimeId = intent!!.getIntExtra("timeId", 0)
         Log.i(LOG_TAG, "groupId: $mGroupId, timeId: $mTimeId")
 
+        // Widgets
+        mAlarmLayout = alarm_layout
         mAlarmNameTextView = alarm_name_text_view
         mDismissGroupButton = alarm_dismiss_group_button
         mSnoozeButton = alarm_snooze_button
-        mDismissButton = alarm_dismiss_button
+        mDismissLayout = alarm_dismiss_layout
+        if (Build.VERSION.SDK_INT >= 17) {
+            mAlarmClock = alarm_clock as TextClock
+        } else if (Build.VERSION.SDK_INT == 16) {
+            mAlarmClock = alarm_clock_16 as DigitalClock
+        }
 
+
+        mNotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         mAudioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         mCalendar = Calendar.getInstance()
+        mGestureDetector = GestureDetector(this, DismissGesture())
+
+        val onTouchListener = View.OnTouchListener { _, motionEvent ->
+            mGestureDetector.onTouchEvent(motionEvent)
+        }
+
+        mAlarmLayout.setOnTouchListener(onTouchListener)
+
+        val swipeToDismissAnimation = AnimationUtils.loadAnimation(this, R.anim.dismiss_arrows_blink)
+        swipeToDismissAnimation.setAnimationListener(object: Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation?) {}
+            override fun onAnimationRepeat(animation: Animation?) {}
+
+            override fun onAnimationEnd(animation: Animation) {
+                // Make the animation repeat infinitely
+                animation.cancel()
+                mDismissLayout.startAnimation(swipeToDismissAnimation)
+            }
+        })
+        mDismissLayout.startAnimation(swipeToDismissAnimation)
 
         mUserRingerMode = mAudioManager.ringerMode
         mUserVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
 
-        alarm()
+        alarm() // Alarm logic
 
-        if (isMoreAlarms(false)) { // Disable Snooze Button (GONE) if this Alarm is repeating, or not the last in group
+        if (isMoreAlarms(false)) { // Disable Snooze Button if this Alarm is repeating, or not the last in group
             mSnoozeButton.visibility = View.GONE
         }
 
@@ -78,6 +129,9 @@ class AlarmActivity: AppCompatActivity() {
             mDismissGroupButton.visibility = View.GONE
         }
 
+        addNotification()
+
+        // Click listeners
         mDismissGroupButton.setOnClickListener {
             dismissGroup()
         }
@@ -86,26 +140,22 @@ class AlarmActivity: AppCompatActivity() {
             snoozeAlarm()
         }
 
-        mDismissButton.setOnClickListener {
+        mAlarmLayout
+        /*mDismissButton.setOnClickListener {
             dismissAlarm()
-        }
-
-        /*val player = MediaPlayer.create(this, RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_RINGTONE))
-        player.prepare()
-        player.start()*/
-
-        /*val defaultRingtoneUri = RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_RINGTONE)
-        Log.i("AlarmActivity", "RingtoneUri: $defaultRingtoneUri")
-
-        val notificationId = intent.getIntExtra("notificationId", 0)
-        val mediaPlayer = MediaPlayer()
-        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC)
-        mediaPlayer.setDataSource(applicationContext, Uri.parse("/system/media/audio/ringtones/MI.ogg"))
-        mediaPlayer.prepare()
-        mediaPlayer.start()*/
+        }*/
     }
 
-    override fun onBackPressed() {
+    // Make back button do nothing (so the user won't leave the activity unintentionally)
+    override fun onBackPressed() { }
+
+    // Make volume buttons do nothing[or mute the alarm?] (so the user won't be able to change the alarm's volume)
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        when (keyCode) {
+            KeyEvent.KEYCODE_VOLUME_UP -> return true
+            KeyEvent.KEYCODE_VOLUME_DOWN -> return true
+        }
+        return super.onKeyDown(keyCode, event)
     }
 
     override fun onAttachedToWindow() {
@@ -157,6 +207,7 @@ class AlarmActivity: AppCompatActivity() {
 
                 val logVolume: Float = (1 - (Math.log((MAX_VOLUME - volume).toDouble()) / Math.log(MAX_VOLUME.toDouble()))).toFloat()
                 mMediaPlayer!!.setVolume(logVolume, logVolume)
+                mMediaPlayer!!.isLooping = true
                 mMediaPlayer!!.start()
             }
 
@@ -212,6 +263,30 @@ class AlarmActivity: AppCompatActivity() {
         groupCursor.close()
     }
 
+    /**
+     * Creates a persistent notification, that once clicked, takes the user back to this activity.
+     */
+    private fun addNotification() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel("default", "Alarm Activity", NotificationManager.IMPORTANCE_DEFAULT)
+            channel.description = "Description"
+            mNotificationManager.createNotificationChannel(channel)
+        }
+        val notificationIntent = this.packageManager.getLaunchIntentForPackage(this.packageName)
+                .setPackage(null)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK and Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+        val notificationPendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val notification = NotificationCompat.Builder(this, "default")
+                .setSmallIcon(R.drawable.ic_alarm_black)
+                .setOngoing(true)
+                .setContentTitle("Alarm is on")
+                .setContentText("Click to go back to the alarm screen")
+                .setContentIntent(notificationPendingIntent)
+                .build()
+        mNotificationManager.notify(0, notification)
+    }
+
     private fun dismissGroup() {
         if (!mIsRepeating) {
             AlarmUtils.cancelGroupAlarms(this, mGroupId, setInactive = true)
@@ -255,10 +330,13 @@ class AlarmActivity: AppCompatActivity() {
                     arrayOf(mGroupId.toString()))
         }
 
-        finishAlarm()
+        animateViewOut()
     }
 
     private fun finishAlarm() {
+        // Remove the notification
+        mNotificationManager.cancel(0)
+
         // Return volume & ringer mode to user's settings
         //mAudioManager.ringerMode = mUserRingerMode
         mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, mUserVolume, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE)
@@ -275,6 +353,21 @@ class AlarmActivity: AppCompatActivity() {
         }
 
         finish()
+    }
+
+    private fun animateViewOut() {
+        val x = AnimationUtils.loadAnimation(this, R.anim.dismiss_alarm)
+        x.setAnimationListener(object: Animation.AnimationListener {
+            override fun onAnimationRepeat(animation: Animation?){}
+            override fun onAnimationStart(animation: Animation?){}
+
+            override fun onAnimationEnd(animation: Animation?) {
+                mAlarmLayout.visibility = View.GONE
+                finishAlarm()
+            }
+        })
+
+        mAlarmLayout.startAnimation(x)
     }
 
     /**
@@ -325,5 +418,49 @@ class AlarmActivity: AppCompatActivity() {
         timesCursor.close()
         Log.i(LOG_TAG, "isMoreAlarms(): false")
         return false
+    }
+
+    inner class DismissGesture : GestureDetector.SimpleOnGestureListener() {
+        override fun onDown(e: MotionEvent?): Boolean {
+            return true
+        }
+
+        override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+            if (Math.abs(e1.x - e2.x) > SWIPE_MAX_OFF_PATH)
+                return false
+            when (getDirection(e1, e2, velocityX, velocityY)) {
+                DIRECTION_UPWARDS ->
+                    dismissAlarm()
+
+                else -> return false
+            }
+
+            return true
+        }
+
+        /**
+         * Returns the direction of a fling
+         * @return  Int One of the following constants:
+         *              *DIRECTION_LEFT_TO_RIGHT*,
+         *              *DIRECTION_RIGHT_TO_LEFT*,
+         *              *DIRECTION_UPWARDS*,
+         *              *DIRECTION_DOWNWARDS*,
+         *              *SWIPE_TOO_SLOW*
+         */
+        private fun getDirection(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Int {
+            return when {
+                (Math.abs(e1.x - e2.x) > SWIPE_MAX_OFF_PATH) ->
+                    SWIPE_TOO_SLOW
+                (e2.y - e1.y > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) ->
+                    DIRECTION_DOWNWARDS
+                (e1.y - e2.y > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) ->
+                    DIRECTION_UPWARDS
+                (e1.x - e2.x > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) ->
+                    DIRECTION_RIGHT_TO_LEFT
+                (e2.x - e1.x > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) ->
+                    DIRECTION_LEFT_TO_RIGHT
+                else -> -1
+            }
+        }
     }
 }

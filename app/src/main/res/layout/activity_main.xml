@@ -48,6 +48,6 @@
         android:focusable="true"
         app:backgroundTint="@color/colorAccent"
         android:src="@drawable/ic_add_alarm2"
-        app:rippleColor="@color/gray_btn_bg_pressed_color"/>
+        app:rippleColor="@color/grayButtonPressedColor"/>
 
 </RelativeLayout>

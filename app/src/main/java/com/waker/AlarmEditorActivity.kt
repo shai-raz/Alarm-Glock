@@ -45,7 +45,7 @@ private const val ADVANCED_SETTINGS_RESULTS = 3
 
 class AlarmEditorActivity: AppCompatActivity() {
 
-    private val LOG_TAG = this.javaClass.simpleName!!
+    private val LOG_TAG = this.javaClass.simpleName
 
     private lateinit var mCancelButton: ImageButton
     private lateinit var mSaveButton: ImageButton
@@ -59,7 +59,7 @@ class AlarmEditorActivity: AppCompatActivity() {
     private lateinit var mTimesRecyclerView: RecyclerView
     private lateinit var mFABCoordinator: CoordinatorLayout
     private lateinit var mAddTimeButton: FloatingActionButton
-    private lateinit var mAddGroupTimeButton: FloatingActionButton
+    //private lateinit var mAddGroupTimeButton: FloatingActionButton
 
     private lateinit var mAlarmManager: AlarmManager
     private lateinit var mLayoutManager: LinearLayoutManager
@@ -91,7 +91,7 @@ class AlarmEditorActivity: AppCompatActivity() {
         mTimesRecyclerView = editor_times_recycler_view
         mFABCoordinator = editor_fab_coordinator
         mAddTimeButton = editor_add_time_fab
-        mAddGroupTimeButton = editor_add_group_time_fab
+        //mAddGroupTimeButton = editor_add_group_time_fab
         //mAddGroupTimeButton.startAnimation(AnimationUtils.loadAnimation(this, R.anim.add_time_fab_show)) // Use when clicking add time fab to add group times
         mAddTimeButton.startAnimation(AnimationUtils.loadAnimation(this, R.anim.add_time_fab_show))
 
@@ -158,8 +158,12 @@ class AlarmEditorActivity: AppCompatActivity() {
             startActivityForResult(intent, ADVANCED_SETTINGS_RESULTS)
         }
 
-        mTimesRecyclerView.addItemDecoration(DividerItemDecoration(this, 1))
         mLayoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        val itemDecoration = DividerItemDecoration(this, mLayoutManager.orientation).apply {
+            setDrawable(ContextCompat.getDrawable(this@AlarmEditorActivity, R.drawable.times_divider)!!)
+        }
+        mTimesRecyclerView.addItemDecoration(itemDecoration)
+
         mTimesRecyclerView.layoutManager = mLayoutManager
 
         mTimesAdapter = TimesAdapter(this, mTimesList)
@@ -176,7 +180,7 @@ class AlarmEditorActivity: AppCompatActivity() {
                 val old = mTimesList[pos]
                 mTimesList.removeAt(pos)
                 mTimesAdapter.notifyItemRemoved(pos)
-                Snackbar.make(mFABCoordinator, "Removed", Snackbar.LENGTH_SHORT)
+                Snackbar.make(mFABCoordinator, getString(R.string.editor_time_removed), Snackbar.LENGTH_SHORT)
                         .addCallback(object: Snackbar.Callback() {
                             override fun onDismissed(snackbar: Snackbar, event: Int) {
                                 when (event) {
@@ -187,6 +191,7 @@ class AlarmEditorActivity: AppCompatActivity() {
                                 }
                             }
                         })
+                        .setActionTextColor(ContextCompat.getColor(this@AlarmEditorActivity, R.color.snackbarAction))
                         .setAction("Undo") {}
                         .show()
 
@@ -234,7 +239,7 @@ class AlarmEditorActivity: AppCompatActivity() {
             groupCursor.close()
             timesCursor.close()
         } else {
-            mTimesList.add(0)
+            addTime()
         }
     }
 
@@ -329,14 +334,20 @@ class AlarmEditorActivity: AppCompatActivity() {
     private fun addTime() {
         val now = Calendar.getInstance()
         val hours = now.get(Calendar.HOUR_OF_DAY)
-        val minutes = now.get(Calendar.MINUTE)
+        val minutes = now.get(Calendar.MINUTE) + 1
 
         val onTimeSetListener = TimePickerDialog.OnTimeSetListener { _, selectedHour, selectedMin ->
             mTimesList.add(AlarmUtils.getMinutesInDay(selectedHour, selectedMin))
             mTimesAdapter.notifyItemInserted(mTimesList.size-1)
+            // If the new time is not the "biggest", notify the adapter to use the new sorted list
+            val oldList = mTimesList.toList()
+            mTimesList.sort()
+            if (mTimesList != oldList) {
+                mTimesAdapter.notifyDataSetChanged()
+            }
         }
 
-        val timePickerDialog = TimePickerDialog(this,
+        val timePickerDialog = MyTimePickerDialog(this,
                 onTimeSetListener,
                 hours,
                 minutes,
@@ -382,10 +393,10 @@ class AlarmEditorActivity: AppCompatActivity() {
 
                 if (groupUri == null) {
                     // If the new content URI is null, then there was an error with insertion.
-                    Snackbar.make(mAlarmNameEditText, "Error adding Alarm", Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(mFABCoordinator, "Error adding Alarm", Snackbar.LENGTH_SHORT).show()
                 } else {
                     // Otherwise, the insertion was successful and we can display a toast.
-                    Snackbar.make(mAlarmNameEditText, "Alarm Saved", Snackbar.LENGTH_SHORT).show()
+                    Snackbar.make(mFABCoordinator, "Alarm Saved", Snackbar.LENGTH_SHORT).show()
                 }
 
                 val groupId = ContentUris.parseId(groupUri).toInt()
@@ -401,10 +412,10 @@ class AlarmEditorActivity: AppCompatActivity() {
 
                     if (timeUri == null) {
                         // If the new content URI is null, then there was an error with insertion.
-                        Snackbar.make(mAlarmNameEditText, "Error adding Time", Snackbar.LENGTH_SHORT).show()
+                        Snackbar.make(mFABCoordinator, "Error adding Time", Snackbar.LENGTH_SHORT).show()
                     } else {
                         // Otherwise, the insertion was successful and we can display a toast.
-                        Snackbar.make(mAlarmNameEditText, "Time Saved", Snackbar.LENGTH_SHORT).show()
+                        Snackbar.make(mFABCoordinator, "Time Saved", Snackbar.LENGTH_SHORT).show()
                     }
                 }
             } else { // Editing existing Alarm (Update)
@@ -447,7 +458,7 @@ class AlarmEditorActivity: AppCompatActivity() {
 
             finish()
         } else { // 2 alarms at the same time
-            Toast.makeText(this, "You can't have 2 alarms at the same time!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.editor_you_cant_set_2_alarms_to_the_same_time), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -460,14 +471,18 @@ class AlarmEditorActivity: AppCompatActivity() {
             fun update(position: Int) {
                 timeTextView.text = AlarmUtils.minutesInDayTo24(list[position])
 
-                itemView.setOnClickListener { view ->
+                itemView.setOnClickListener { _ ->
+                    val onTimeSetListener = TimePickerDialog.OnTimeSetListener { _, selectedHour, selectedMin ->
+                        mTimesList[position] = AlarmUtils.getMinutesInDay(selectedHour, selectedMin)
+                        mTimesAdapter.notifyItemChanged(position)
+                    }
+
                     val timePickerDialog = TimePickerDialog(mContext,
-                            TimePickerDialog.OnTimeSetListener { timePicker, selectedHour, selectedMin ->
-                                mTimesList[position] = AlarmUtils.getMinutesInDay(selectedHour, selectedMin)
-                                mTimesAdapter.notifyItemChanged(position) },
+                            onTimeSetListener,
                             AlarmUtils.minutesInDayToHours(mTimesList[position]).toInt(),
                             AlarmUtils.minutesInDayToMinutes(mTimesList[position]).toInt(),
                             true)
+
                     timePickerDialog.show()
                 }
             }
@@ -488,6 +503,9 @@ class AlarmEditorActivity: AppCompatActivity() {
 
     }
 
+    /**
+     * @return true if mTimesList has duplicates
+     */
     private fun hasDuplicates(): Boolean {
         val duplicateList = mutableListOf<Int>()
         for (time in mTimesList) {
@@ -518,5 +536,14 @@ class AlarmEditorActivity: AppCompatActivity() {
         }
 
         return list
+    }
+}
+
+/**
+ * A workaround to fix a call to OnTimeSetListener when not actually setting the time (on older devices using JellyBean)
+ */
+class MyTimePickerDialog(context: Context, listener: TimePickerDialog.OnTimeSetListener, hourOfDay: Int, minute: Int, is24HourView: Boolean):
+        TimePickerDialog(context, listener, hourOfDay, minute, is24HourView) {
+    override fun onStop() {
     }
 }

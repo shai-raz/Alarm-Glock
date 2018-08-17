@@ -5,13 +5,15 @@
     <color name="colorAccent">#22338c</color>
     <!--accent 22338c-->
 
-    <color name="gray_btn_bg_pressed_color">#B6B6B6</color>
+    <color name="grayButtonPressedColor">#B6B6B6</color>
 
-    <color name="BodyTextView">#292929</color>
-    <color name="SubtitleTextView">#98434343</color>
-    <color name="TimesTextView">#000000</color>
-    <color name="GroupTimesTextView">#8a000000</color>
-    <color name="DayOfWeekText">#af000000</color>
+    <color name="bodyTextView">#292929</color>
+    <color name="subtitleTextView">#98434343</color>
+    <color name="timesTextView">#000000</color>
+    <color name="groupTimesTextView">#8a000000</color>
+    <color name="dayOfWeekText">#af000000</color>
+    <color name ="snackbarAction">#2979ff</color>
+    <color name="toggleBackground">#cccccc</color>
 
-    <color name="ToggleBackground">#cccccc</color>
+    <color name="alarmWhiteForeground">#9affffff</color>
 </resources>

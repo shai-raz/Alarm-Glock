@@ -3,6 +3,6 @@
     <item android:state_checked="true" android:color="@android:color/white" />
     <item android:state_selected="true" android:color="@android:color/white" />
     <item android:state_focused="true" android:color="@android:color/white" />
-    <item android:color="@color/BodyTextView" /> <!-- default case -->
+    <item android:color="@color/bodyTextView" /> <!-- default case -->
 
 </selector>

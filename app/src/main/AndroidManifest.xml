@@ -22,7 +22,6 @@
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -43,10 +42,16 @@
         </activity>
 
         <activity android:name=".AlarmActivity"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
+
         <activity android:name=".RingtoneActivity" />
+
         <activity android:name=".ChooseRingtoneActivity"
             android:screenOrientation="portrait"/>
+
+        <activity android:name=".GestureTest">
+
+        </activity>
 
 
         <provider

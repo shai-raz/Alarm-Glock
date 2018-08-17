@@ -29,7 +29,7 @@ class AlarmProvider: ContentProvider() {
     }
 
     override fun onCreate(): Boolean {
-        mDbHelper = DbHelper(context)
+        mDbHelper = DbHelper(context!!)
         return true
     }
 
@@ -57,7 +57,7 @@ class AlarmProvider: ContentProvider() {
             else -> throw IllegalArgumentException("Cannot query, unknown URI: $uri")
         }
 
-        cursor.setNotificationUri(context.contentResolver, uri)
+        cursor.setNotificationUri(context!!.contentResolver, uri)
 
         return cursor
     }
@@ -78,7 +78,7 @@ class AlarmProvider: ContentProvider() {
         val id = db.insert(tableName, null, contentValues)
         if (id == -1L) return null
 
-        context.contentResolver.notifyChange(uri, null)
+        context!!.contentResolver.notifyChange(uri, null)
 
         return ContentUris.withAppendedId(uri, id)
     }
@@ -108,7 +108,7 @@ class AlarmProvider: ContentProvider() {
         val db = mDbHelper.writableDatabase
 
         val rowsUpdated = db.update(tableName, contentValues, selection, selectionArgs)
-        if (rowsUpdated != 0) context.contentResolver.notifyChange(uri, null)
+        if (rowsUpdated != 0) context!!.contentResolver.notifyChange(uri, null)
 
         return rowsUpdated
     }
@@ -125,7 +125,7 @@ class AlarmProvider: ContentProvider() {
             else -> throw IllegalArgumentException("Cannot insert, unknown URI: $uri")
         }
 
-        if (rowsDeleted != 0) context.contentResolver.notifyChange(uri, null)
+        if (rowsDeleted != 0) context!!.contentResolver.notifyChange(uri, null)
 
         return rowsDeleted
     }

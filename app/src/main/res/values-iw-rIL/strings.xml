@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Waker</string>
+    <string name="main_no_active_alarms">אין שעונים פעילים.</string>
+    <string name="main_no_alarms_are_set">עדיין לא הוספת שעונים!</string>
+    <string name="main_next_alarm_in">"השעון מעורר הבא בעוד: "</string>
+    <string name="main_in_days">%1$d ,&#160;</string>
+    <string name="main_in_hours">%1$d שעות,&#160;</string>
+    <string name="main_in_minutes">%1$d דקות,&#160;</string>
+    <string name="main_in_seconds">%1$d שניות.</string>
+    <string name="group_entry_everyday">כל יום</string>
+    <string name="editor_alarm_name">שם</string>
+    <string name="editor_sound">צלצול</string>
+    <string name="editor_pick_ringtone">בחר רינגטון</string>
+    <string name="editor_no_ringtone_chosen">לא נבחר רינגטון</string>
+    <string name="editor_advanced_settings_button">אפשרויות מתקדמות</string>
+    <string name="editor_no_ringtone_was_chosen">לא נבחר רינגטון</string>
+    <string name="editor_you_cant_set_2_alarms_to_the_same_time">לא ניתן לקבוע שני שעונים מעוררים באותו הזמן!</string>
+    <string name="editor_vibrate">רטט</string>
+    <string name="editor_alarm_volume">עוצמת רינגטון</string>
+    <string name="editor_snooze_duration">אורך נודניק</string>
+    <string name="ringtone_chooser_choose_from_local_music">בחר ממוזיקה מקומית</string>
+    <string name="ringtone_chooser_no_local_ringtone_chosen">לא נבחר רינגטון מקומי</string>
+    <string name="ringtone_chooser_please_choose_a_ringtone_first">אנא בחר רינגטון</string>
+    <string name="alarm_dismiss_group">בטל קבוצה</string>
+    <string name="alarm_snooze">נודניק</string>
+    <string name="alarm_swipe_up_to_dismiss">החלק מעלה לביטול</string>
+    <string name="editor_toggle_sunday">א</string>
+    <string name="editor_toggle_monday">ב</string>
+    <string name="editor_toggle_tuesday">ג</string>
+    <string name="editor_toggle_wednesday">ד</string>
+    <string name="editor_toggle_thursday">ה</string>
+    <string name="editor_toggle_friday">ו</string>
+    <string name="editor_toggle_saturday">ש</string>
+    <string name="dialog_permission_required">נדרשת הרשאה!</string>
+    <string name="dialog_request_permission">על מנת לבחור רינגטון, אנו צריכים הרשאה לאחסון שלך, אנא אשר בדיאלוג הבא.</string>
+    <string name="dialog_permission_wasnt_granted">לא ניתנה הרשאה</string>
+    <string name="menu_main_delete">מחק</string>
+    <string name="description_expand_or_collapse">הרחב או הקטן</string>
+    <string name="description_sound_is_on">קול דלוק</string>
+    <string name="description_sound_is_off">קול כבוי</string>
+    <string name="editor_time_removed">נמחק</string>
+</resources>

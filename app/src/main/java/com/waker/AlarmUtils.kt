@@ -18,12 +18,12 @@ fun Boolean.toInt() = if (this) 1 else 0
 
 object AlarmUtils {
 
-    private val LOG_TAG = this.javaClass.simpleName!!
+    private val LOG_TAG = this.javaClass.simpleName
 
     /**
      * Set all Alarms of a group
-     * @param context Activity Context
-     * @param groupId The ID of the group
+     * @param context   Activity Context
+     * @param groupId   The ID of the group
      */
     fun setGroupAlarms(context: Context, groupId: Int, dayOfWeek: Int? = null, nextWeek: Boolean = false) {
         val alarmProjection = arrayOf(AlarmTimeEntry.COLUMN_ID,
@@ -72,7 +72,8 @@ object AlarmUtils {
      * @param daysOfWeek    The Days of Week in which the Alarm should repeat - no repeating days will result in a one-time alarm
      * @param alarmManager  AlarmManager: An AlarmManager instance
      */
-    fun setAlarm(appContext: Context, time: Int, timeId: Int, groupId: Int, daysOfWeek: List<Int>, alarmManager: AlarmManager, specificAlarmTime: Calendar? = null, nextWeek: Boolean = false) {
+    fun setAlarm(appContext: Context, time: Int, timeId: Int, groupId: Int, daysOfWeek: List<Int>,
+                 alarmManager: AlarmManager, specificAlarmTime: Calendar? = null, nextWeek: Boolean = false) {
         val now = Calendar.getInstance()
 
         var alarmTime = specificAlarmTime ?: Calendar.getInstance().apply {
@@ -85,36 +86,34 @@ object AlarmUtils {
             if (alarmTime.before(now)) { // If the chosen time is before the current time, have it run the next day
                 alarmTime.add(Calendar.DAY_OF_MONTH, 1)
             }
+            val pendingIntent = PendingIntent.getBroadcast(appContext,
+                    "${timeId}0".toInt(),
+                    Intent(appContext, AlarmBroadcastReceiver::class.java)
+                            .putExtra("groupId", groupId)
+                            .putExtra("timeId", timeId),
+                    PendingIntent.FLAG_UPDATE_CURRENT)
             when { // Check the current Android Version, and set the alarm to work at an exact time, even in Doze
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> // For API >= 23, allow the alarm to start when in Doze & be Exact
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+                    /*alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
                             alarmTime.timeInMillis,
                             PendingIntent.getBroadcast(appContext,
                                     "${timeId}0".toInt(),
                                     Intent(appContext, AlarmBroadcastReceiver::class.java)
                                             .putExtra("groupId", groupId)
                                             .putExtra("timeId", timeId),
-                                    PendingIntent.FLAG_UPDATE_CURRENT))
+                                    PendingIntent.FLAG_UPDATE_CURRENT))*/
+                    alarmManager.setAlarmClock(AlarmManager.AlarmClockInfo(alarmTime.timeInMillis, pendingIntent),
+                            pendingIntent)
 
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT -> // For API >= 19, make the alarm Exact
                     alarmManager.setExact(AlarmManager.RTC_WAKEUP,
                             alarmTime.timeInMillis,
-                            PendingIntent.getBroadcast(appContext,
-                                    "${timeId}0".toInt(),
-                                    Intent(appContext, AlarmBroadcastReceiver::class.java)
-                                            .putExtra("groupId", groupId)
-                                            .putExtra("timeId", timeId),
-                                    PendingIntent.FLAG_UPDATE_CURRENT))
+                            pendingIntent)
 
                 else -> // For API < 19, the alarm will already be exact (& no Doze mode)
                     alarmManager.set(AlarmManager.RTC_WAKEUP,
                             alarmTime.timeInMillis,
-                            PendingIntent.getBroadcast(appContext,
-                                    "${timeId}0".toInt(),
-                                    Intent(appContext, AlarmBroadcastReceiver::class.java)
-                                            .putExtra("groupId", groupId)
-                                            .putExtra("timeId", timeId),
-                                    PendingIntent.FLAG_UPDATE_CURRENT))
+                            pendingIntent)
             }
             Log.i(LOG_TAG, "Next Alarm is set for ${SimpleDateFormat("dd.MM.yyyy HH:mm").format(alarmTime.time)}, [${timeId}0]")
         } else { // If the Alarm does repeat for certain days
@@ -138,36 +137,29 @@ object AlarmUtils {
                         Log.i(LOG_TAG, "System.currentTimeMillis() > alarmTime.timeInMillis = true")
                         alarmTime.add(Calendar.DAY_OF_YEAR, 7)
                     }
+                    val pendingIntent = PendingIntent.getBroadcast(appContext,
+                            "$timeId${i+1}".toInt(),
+                            Intent(appContext, AlarmBroadcastReceiver::class.java)
+                                    .putExtra("groupId", groupId)
+                                    .putExtra("timeId", timeId),
+                            PendingIntent.FLAG_UPDATE_CURRENT)
                     when {
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> // For API >= 23, allow the alarm to start when in Doze & be Exact
-                            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+                            /*alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
                                     alarmTime.timeInMillis,
-                                    PendingIntent.getBroadcast(appContext,
-                                            "$timeId${i+1}".toInt(),
-                                            Intent(appContext, AlarmBroadcastReceiver::class.java)
-                                                    .putExtra("groupId", groupId)
-                                                    .putExtra("timeId", timeId),
-                                            PendingIntent.FLAG_UPDATE_CURRENT))
+                                    pendingIntent)*/
+                            alarmManager.setAlarmClock(AlarmManager.AlarmClockInfo(alarmTime.timeInMillis, pendingIntent),
+                                    pendingIntent)
 
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT -> // For API >= 19, make the alarm Exact
                             alarmManager.setExact(AlarmManager.RTC_WAKEUP,
                                     alarmTime.timeInMillis,
-                                    PendingIntent.getBroadcast(appContext,
-                                            "$timeId${i+1}".toInt(),
-                                            Intent(appContext, AlarmBroadcastReceiver::class.java)
-                                                    .putExtra("groupId", groupId)
-                                                    .putExtra("timeId", timeId),
-                                            PendingIntent.FLAG_UPDATE_CURRENT))
+                                    pendingIntent)
 
                         else -> // For API < 19, the alarm will already be exact (& no Doze mode)
                             alarmManager.set(AlarmManager.RTC_WAKEUP,
                                     alarmTime.timeInMillis,
-                                    PendingIntent.getBroadcast(appContext,
-                                            "$timeId${i+1}".toInt(),
-                                            Intent(appContext, AlarmBroadcastReceiver::class.java)
-                                                    .putExtra("groupId", groupId)
-                                                    .putExtra("timeId", timeId),
-                                            PendingIntent.FLAG_UPDATE_CURRENT))
+                                    pendingIntent)
                     }
                     Log.i(LOG_TAG, "(Repeating) Next Alarm is set for ${SimpleDateFormat("dd.MM.yyyy HH:mm").format(alarmTime.time)} [$timeId${i+1}]")
                 }

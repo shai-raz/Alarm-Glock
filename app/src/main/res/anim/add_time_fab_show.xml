@@ -3,7 +3,7 @@
     android:fillAfter="true">
 
     <!-- Rotate -->
-    <rotate
+    <!--<rotate
         android:duration="120"
         android:fromDegrees="90"
         android:interpolator="@android:anim/linear_interpolator"
@@ -11,7 +11,7 @@
         android:pivotY="50%"
         android:repeatCount="4"
         android:repeatMode="reverse"
-        android:toDegrees="0"/>
+        android:toDegrees="0"/>-->
 
     <!--Move-->
     <translate

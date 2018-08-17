@@ -17,6 +17,8 @@ class AlarmBroadcastReceiver: BroadcastReceiver() {
         alarmIntent.putExtra("groupId", groupId)
         alarmIntent.putExtra("timeId", timeId)
         startActivity(context!!, alarmIntent, null)
+
+
         //val notificationManager = context?.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         /*notificationManager.notify(intent!!.getIntExtra("notificationId", 0),
                 Notification.Builder(context).apply {
