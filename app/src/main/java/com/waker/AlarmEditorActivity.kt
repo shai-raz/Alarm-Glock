@@ -198,13 +198,13 @@ class AlarmEditorActivity: AppCompatActivity() {
                 // Update the positions (of items after affected items) in the adapter so that the onClickListener will be called for the correct positions
                 mTimesAdapter.notifyItemRangeChanged(pos, mTimesAdapter.itemCount)
             }
-            override fun getSwipeDirs(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
-                if (mTimesAdapter.itemCount == 1) {
+            /*override fun getSwipeDirs(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
+                /*if (mTimesAdapter.itemCount == 1) { // disable swipe if there is only 1 time
                     return ItemTouchHelper.ACTION_STATE_IDLE
-                }
+                }*/
 
                 return super.getSwipeDirs(recyclerView, viewHolder)
-            }
+            }*/
 
         })
 
@@ -368,97 +368,101 @@ class AlarmEditorActivity: AppCompatActivity() {
         val alarmName = mAlarmNameEditText.text.toString().trim()
         val isSound = mSoundSwitch.isChecked.toInt()
 
-        if (!hasDuplicates()) {
-            val groupValues = ContentValues()
-            groupValues.put(AlarmGroupEntry.COLUMN_NAME, alarmName)
-            groupValues.put(AlarmGroupEntry.COLUMN_ACTIVE, 1)
-            groupValues.put(AlarmGroupEntry.COLUMN_SOUND, isSound)
-            groupValues.put(AlarmGroupEntry.COLUMN_RINGTONE_URI, ringtoneUri.toString())
+        when {
+            hasDuplicates() -> // 2 alarms at the same time
+                Toast.makeText(this, getString(R.string.editor_you_cant_set_2_alarms_to_the_same_time), Toast.LENGTH_SHORT).show()
+            mTimesList.isEmpty() -> // no times are set
+                Toast.makeText(this, getString(R.string.editor_you_must_have_at_least_one_time_set), Toast.LENGTH_SHORT).show()
+            else -> { // everything is fine, set the alarm
+                val groupValues = ContentValues()
+                groupValues.put(AlarmGroupEntry.COLUMN_NAME, alarmName)
+                groupValues.put(AlarmGroupEntry.COLUMN_ACTIVE, 1)
+                groupValues.put(AlarmGroupEntry.COLUMN_SOUND, isSound)
+                groupValues.put(AlarmGroupEntry.COLUMN_RINGTONE_URI, ringtoneUri.toString())
 
-            val daysOfWeek: MutableList<Int> = mutableListOf()
-            for (i in 0 until mDaysOfWeekToggle.size) {
-                daysOfWeek.add(i, mDaysOfWeekToggle[i].isChecked.toInt())
-            }
-            groupValues.put(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK, daysOfWeek.toString())
-            groupValues.put(AlarmGroupEntry.COLUMN_VIBRATE, isVibrate.toInt())
-            groupValues.put(AlarmGroupEntry.COLUMN_VOLUME, volume)
-            groupValues.put(AlarmGroupEntry.COLUMN_SNOOZE_DURATION, snoozeDuration)
-
-            val timesValues = ContentValues()
-            var timeUri: Uri
-            var timeId: Int
-
-            if (!mEditMode) { // Creating a new Alarm (Insert)
-                val groupUri = contentResolver.insert(AlarmGroupEntry.CONTENT_URI, groupValues)
-
-                if (groupUri == null) {
-                    // If the new content URI is null, then there was an error with insertion.
-                    Snackbar.make(mFABCoordinator, "Error adding Alarm", Snackbar.LENGTH_SHORT).show()
-                } else {
-                    // Otherwise, the insertion was successful and we can display a toast.
-                    Snackbar.make(mFABCoordinator, "Alarm Saved", Snackbar.LENGTH_SHORT).show()
+                val daysOfWeek: MutableList<Int> = mutableListOf()
+                for (i in 0 until mDaysOfWeekToggle.size) {
+                    daysOfWeek.add(i, mDaysOfWeekToggle[i].isChecked.toInt())
                 }
+                groupValues.put(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK, daysOfWeek.toString())
+                groupValues.put(AlarmGroupEntry.COLUMN_VIBRATE, isVibrate.toInt())
+                groupValues.put(AlarmGroupEntry.COLUMN_VOLUME, volume)
+                groupValues.put(AlarmGroupEntry.COLUMN_SNOOZE_DURATION, snoozeDuration)
 
-                val groupId = ContentUris.parseId(groupUri).toInt()
+                val timesValues = ContentValues()
+                var timeUri: Uri
+                var timeId: Int
 
-                for (time in mTimesList) {
-                    timesValues.put(AlarmTimeEntry.COLUMN_GROUP_ID, groupId)
-                    timesValues.put(AlarmTimeEntry.COLUMN_TIME, time)
-                    timeUri = contentResolver.insert(AlarmTimeEntry.CONTENT_URI, timesValues)
-                    timeId = ContentUris.parseId(timeUri).toInt()
-                    timesValues.clear()
+                if (!mEditMode) { // Creating a new Alarm (Insert)
+                    val groupUri = contentResolver.insert(AlarmGroupEntry.CONTENT_URI, groupValues)
 
-                    AlarmUtils.setAlarm(this, time, timeId, groupId, daysOfWeek, mAlarmManager)
-
-                    if (timeUri == null) {
+                    if (groupUri == null) {
                         // If the new content URI is null, then there was an error with insertion.
-                        Snackbar.make(mFABCoordinator, "Error adding Time", Snackbar.LENGTH_SHORT).show()
+                        Snackbar.make(mFABCoordinator, "Error adding Alarm", Snackbar.LENGTH_SHORT).show()
                     } else {
                         // Otherwise, the insertion was successful and we can display a toast.
-                        Snackbar.make(mFABCoordinator, "Time Saved", Snackbar.LENGTH_SHORT).show()
+                        Snackbar.make(mFABCoordinator, "Alarm Saved", Snackbar.LENGTH_SHORT).show()
                     }
-                }
-            } else { // Editing existing Alarm (Update)
-                AlarmUtils.cancelGroupAlarms(this, mGroupId)
 
-                val rowsAffected = contentResolver.update(AlarmGroupEntry.CONTENT_URI,
-                        groupValues,
-                        "${AlarmGroupEntry.COLUMN_ID}=?",
-                        arrayOf(mGroupId.toString()))
+                    val groupId = ContentUris.parseId(groupUri).toInt()
 
-                if (rowsAffected == 0) {
-                    Snackbar.make(mAlarmNameEditText, "Error adding Time", Snackbar.LENGTH_SHORT).show()
-                } else {
-                    Snackbar.make(mAlarmNameEditText, "Time Saved", Snackbar.LENGTH_SHORT).show()
-                }
+                    for (time in mTimesList) {
+                        timesValues.put(AlarmTimeEntry.COLUMN_GROUP_ID, groupId)
+                        timesValues.put(AlarmTimeEntry.COLUMN_TIME, time)
+                        timeUri = contentResolver.insert(AlarmTimeEntry.CONTENT_URI, timesValues)
+                        timeId = ContentUris.parseId(timeUri).toInt()
+                        timesValues.clear()
 
-                // Delete all existing times, and insert them anew
-                contentResolver.delete(AlarmTimeEntry.CONTENT_URI,
-                        "${AlarmTimeEntry.COLUMN_GROUP_ID}=?",
-                        arrayOf(mGroupId.toString()))
+                        AlarmUtils.setAlarm(this, time, timeId, groupId, daysOfWeek, mAlarmManager)
 
-                for (time in mTimesList) {
-                    timesValues.put(AlarmContract.AlarmTimeEntry.COLUMN_GROUP_ID, mGroupId)
-                    timesValues.put(AlarmContract.AlarmTimeEntry.COLUMN_TIME, time)
-                    timeUri = contentResolver.insert(AlarmContract.AlarmTimeEntry.CONTENT_URI, timesValues)
-                    timeId = ContentUris.parseId(timeUri).toInt()
-                    timesValues.clear()
+                        if (timeUri == null) {
+                            // If the new content URI is null, then there was an error with insertion.
+                            Snackbar.make(mFABCoordinator, "Error adding Time", Snackbar.LENGTH_SHORT).show()
+                        } else {
+                            // Otherwise, the insertion was successful and we can display a toast.
+                            Snackbar.make(mFABCoordinator, "Time Saved", Snackbar.LENGTH_SHORT).show()
+                        }
+                    }
+                } else { // Editing existing Alarm (Update)
+                    AlarmUtils.cancelGroupAlarms(this, mGroupId)
 
-                    AlarmUtils.setAlarm(this, time, timeId, mGroupId, daysOfWeek, mAlarmManager)
+                    val rowsAffected = contentResolver.update(AlarmGroupEntry.CONTENT_URI,
+                            groupValues,
+                            "${AlarmGroupEntry.COLUMN_ID}=?",
+                            arrayOf(mGroupId.toString()))
 
-                    if (timeUri == null) {
-                        // If the new content URI is null, then there was an error with insertion.
+                    if (rowsAffected == 0) {
                         Snackbar.make(mAlarmNameEditText, "Error adding Time", Snackbar.LENGTH_SHORT).show()
                     } else {
-                        // Otherwise, the insertion was successful and we can display a toast.
                         Snackbar.make(mAlarmNameEditText, "Time Saved", Snackbar.LENGTH_SHORT).show()
                     }
-                }
-            }
 
-            finish()
-        } else { // 2 alarms at the same time
-            Toast.makeText(this, getString(R.string.editor_you_cant_set_2_alarms_to_the_same_time), Toast.LENGTH_SHORT).show()
+                    // Delete all existing times, and insert them anew
+                    contentResolver.delete(AlarmTimeEntry.CONTENT_URI,
+                            "${AlarmTimeEntry.COLUMN_GROUP_ID}=?",
+                            arrayOf(mGroupId.toString()))
+
+                    for (time in mTimesList) {
+                        timesValues.put(AlarmContract.AlarmTimeEntry.COLUMN_GROUP_ID, mGroupId)
+                        timesValues.put(AlarmContract.AlarmTimeEntry.COLUMN_TIME, time)
+                        timeUri = contentResolver.insert(AlarmContract.AlarmTimeEntry.CONTENT_URI, timesValues)
+                        timeId = ContentUris.parseId(timeUri).toInt()
+                        timesValues.clear()
+
+                        AlarmUtils.setAlarm(this, time, timeId, mGroupId, daysOfWeek, mAlarmManager)
+
+                        if (timeUri == null) {
+                            // If the new content URI is null, then there was an error with insertion.
+                            Snackbar.make(mAlarmNameEditText, "Error adding Time", Snackbar.LENGTH_SHORT).show()
+                        } else {
+                            // Otherwise, the insertion was successful and we can display a toast.
+                            Snackbar.make(mAlarmNameEditText, "Time Saved", Snackbar.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+
+                finish()
+            }
         }
     }
 

@@ -25,6 +25,7 @@ import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.*
 import com.waker.AlarmUtils.getMinutesInDay
+import com.waker.data.AlarmContract.AlarmEntry
 import com.waker.data.AlarmContract.AlarmGroupEntry
 import com.waker.data.AlarmContract.AlarmTimeEntry
 import kotlinx.android.synthetic.main.alarm_layout.*
@@ -61,6 +62,7 @@ class AlarmActivity: AppCompatActivity() {
 
 
     private lateinit var mDaysOfWeek: List<Int>
+    private var mAlarmId = 0
     private var mGroupId = 0
     private var mTimeId = 0
     private var mIsRepeating = false
@@ -75,9 +77,10 @@ class AlarmActivity: AppCompatActivity() {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN) // Make activity fullscreen
         setContentView(R.layout.alarm_layout)
 
+        mAlarmId = intent!!.getIntExtra("alarmId", 0)
         mGroupId = intent!!.getIntExtra("groupId", 0)
         mTimeId = intent!!.getIntExtra("timeId", 0)
-        Log.i(LOG_TAG, "groupId: $mGroupId, timeId: $mTimeId")
+        Log.i(LOG_TAG, "groupId: $mGroupId, timeId: $mTimeId, alarmId: $mAlarmId")
 
         // Widgets
         mAlarmLayout = alarm_layout
@@ -103,6 +106,7 @@ class AlarmActivity: AppCompatActivity() {
 
         mAlarmLayout.setOnTouchListener(onTouchListener)
 
+        // Set animation for swiping screen up to dismiss
         val swipeToDismissAnimation = AnimationUtils.loadAnimation(this, R.anim.dismiss_arrows_blink)
         swipeToDismissAnimation.setAnimationListener(object: Animation.AnimationListener {
             override fun onAnimationStart(animation: Animation?) {}
@@ -121,11 +125,9 @@ class AlarmActivity: AppCompatActivity() {
 
         alarm() // Alarm logic
 
-        if (isMoreAlarms(false)) { // Disable Snooze Button if this Alarm is repeating, or not the last in group
+        if (isMoreAlarmsToday()) { // Disable Snooze Button if this is not the last in group
             mSnoozeButton.visibility = View.GONE
-        }
-
-        if (!isMoreAlarms(false)) {
+        } else {
             mDismissGroupButton.visibility = View.GONE
         }
 
@@ -165,7 +167,32 @@ class AlarmActivity: AppCompatActivity() {
                 or WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD)
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        Log.i(LOG_TAG, "onNewIntent()")
+    }
+
     private fun alarm() {
+        // Is this a snooze alarm? (check before deleting the entry)
+        val alarmCursor = contentResolver.query(AlarmEntry.CONTENT_URI,
+                arrayOf(AlarmEntry.COLUMN_IS_SNOOZE),
+                "${AlarmEntry.COLUMN_ALARM_ID}=?",
+                arrayOf(mAlarmId.toString()),
+                null)
+        Log.i(LOG_TAG, "alarmCursorCount: ${alarmCursor?.count} alarmId")
+
+        var isSnooze = false
+        if (alarmCursor?.moveToFirst() == true) {
+            isSnooze = alarmCursor.getInt(alarmCursor.getColumnIndex(AlarmEntry.COLUMN_IS_SNOOZE)) == 1
+            Log.i(LOG_TAG, "isSnooze: $isSnooze")
+        }
+        alarmCursor?.close()
+
+        // Delete the alarm from the alarms table
+        contentResolver.delete(AlarmEntry.CONTENT_URI,
+                "${AlarmEntry.COLUMN_ALARM_ID}=?",
+                arrayOf(mAlarmId.toString()))
+
         val groupProjection = arrayOf(AlarmGroupEntry.COLUMN_NAME,
                 AlarmGroupEntry.COLUMN_SOUND,
                 AlarmGroupEntry.COLUMN_RINGTONE_URI,
@@ -180,7 +207,8 @@ class AlarmActivity: AppCompatActivity() {
                 arrayOf(mGroupId.toString()),
                 null)
 
-        if (groupCursor.moveToFirst()) {
+        if (groupCursor?.moveToFirst() == true) {
+            // Get the alarm info
             val name: String = groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_NAME))
             val ringtoneUri: String = groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_RINGTONE_URI))
             val isSound: Boolean = groupCursor.getInt(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_SOUND)) == 1
@@ -222,7 +250,7 @@ class AlarmActivity: AppCompatActivity() {
 
             val daysOfWeekString = groupCursor.getString(groupCursor.getColumnIndex(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK))
             mDaysOfWeek = AlarmUtils.getDOWArray(daysOfWeekString)
-            if (AlarmUtils.isRepeating(mDaysOfWeek)) { // If the alarm is set to repeat, set the next week's Alarm
+            if (AlarmUtils.isRepeating(mDaysOfWeek) && !isSnooze) { // If the alarm is set to repeat, set the next week's Alarm
                 Log.i(LOG_TAG, "mIsRepeating = true")
                 mIsRepeating = true
 
@@ -235,7 +263,7 @@ class AlarmActivity: AppCompatActivity() {
                         arrayOf(mTimeId.toString()),
                         null)
 
-                if (timeCursor.moveToFirst()) {
+                if (timeCursor?.moveToFirst() == true) {
                     val time = timeCursor.getInt(timeCursor.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
                     val timeId = timeCursor.getInt(timeCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID))
                     val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -256,18 +284,22 @@ class AlarmActivity: AppCompatActivity() {
                             nextAlarmDate)
                 }
 
-                timeCursor.close()
+                timeCursor?.close()
             }
         }
 
-        groupCursor.close()
+        groupCursor?.close()
+
+        // Delete the alarm from the alarms table
+        /*contentResolver.delete(AlarmEntry.CONTENT_URI,
+                "${AlarmEntry.COLUMN_TIME_ID}=?",
+                arrayOf(mTimeId.toString()))*/
     }
 
     /**
      * Creates a persistent notification, that once clicked, takes the user back to this activity.
      */
     private fun addNotification() {
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel("default", "Alarm Activity", NotificationManager.IMPORTANCE_DEFAULT)
             channel.description = "Description"
@@ -275,8 +307,9 @@ class AlarmActivity: AppCompatActivity() {
         }
         val notificationIntent = this.packageManager.getLaunchIntentForPackage(this.packageName)
                 .setPackage(null)
-                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK and Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
-        val notificationPendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+                //.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK and Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+        //val notificationPendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val notificationPendingIntent = PendingIntent.getActivity(this, 0, Intent(this, AlarmActivity::class.java), PendingIntent.FLAG_UPDATE_CURRENT)
         val notification = NotificationCompat.Builder(this, "default")
                 .setSmallIcon(R.drawable.ic_alarm_black)
                 .setOngoing(true)
@@ -313,7 +346,8 @@ class AlarmActivity: AppCompatActivity() {
                 mTimeId,
                 mGroupId,
                 AlarmUtils.listOfSpecificDay(-1),
-                alarmManager)
+                alarmManager,
+                isSnooze = true)
 
         finishAlarm()
     }
@@ -370,6 +404,27 @@ class AlarmActivity: AppCompatActivity() {
         mAlarmLayout.startAnimation(x)
     }
 
+    private fun isMoreAlarmsToday(): Boolean {
+        val alarmCursor = contentResolver.query(AlarmEntry.CONTENT_URI,
+                arrayOf(AlarmEntry.COLUMN_UNIX_TIME),
+                "${AlarmEntry.COLUMN_GROUP_ID}=? AND ${AlarmEntry.COLUMN_TIME_ID}!=$mTimeId",
+                arrayOf(mGroupId.toString()),
+                "${AlarmEntry.COLUMN_GROUP_ID} ASC")
+
+        while (alarmCursor?.moveToNext() == true) {
+            val unixTime = alarmCursor.getLong(alarmCursor.getColumnIndex(AlarmEntry.COLUMN_UNIX_TIME))
+            val currentDayOfWeek = mCalendar.get(Calendar.DAY_OF_WEEK)
+            val alarmDayOfWeek = Calendar.getInstance().apply{timeInMillis = unixTime}.get(Calendar.DAY_OF_WEEK)
+
+            if (currentDayOfWeek == alarmDayOfWeek) {
+                return true
+            }
+        }
+
+        alarmCursor?.close()
+        return false
+    }
+
     /**
      * Checks if there are more set alarms for the current group
      */
@@ -397,7 +452,7 @@ class AlarmActivity: AppCompatActivity() {
         }
         Log.i(LOG_TAG, "dayOfWeek: $dayOfWeek")
 
-        while(timesCursor.moveToNext()) {
+        while(timesCursor?.moveToNext() == true) {
             timeId = timesCursor.getInt(timesCursor.getColumnIndex(AlarmTimeEntry.COLUMN_ID))
             time = timesCursor.getInt(timesCursor.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
             Log.i(LOG_TAG, "currentTime: $currentTime, time: $time")
@@ -415,7 +470,7 @@ class AlarmActivity: AppCompatActivity() {
             }
         }
 
-        timesCursor.close()
+        timesCursor?.close()
         Log.i(LOG_TAG, "isMoreAlarms(): false")
         return false
     }

@@ -9,6 +9,7 @@ object AlarmContract {
     val BASE_CONTENT_URI: Uri = Uri.parse("content://$CONTENT_AUTHORITY")
     const val PATH_ALARM_GROUP = "alarm_group"
     const val PATH_ALARM_TIME = "alarm_time"
+    const val PATH_ALARM = "alarm"
 
     class AlarmGroupEntry: BaseColumns {
 
@@ -50,5 +51,24 @@ object AlarmContract {
             const val COLUMN_GROUP_ID = "group_id"
         }
 
+    }
+
+    class AlarmEntry: BaseColumns {
+
+        companion object {
+            val CONTENT_URI: Uri = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_ALARM)
+            const val CONTENT_LIST_TYPE =
+                    ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_ALARM
+            const val CONTENT_ITEM_TYPE =
+                    ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_ALARM
+
+            const val TABLE_NAME = "alarms"
+            const val COLUMN_ID = BaseColumns._ID
+            const val COLUMN_UNIX_TIME = "unix_time"
+            const val COLUMN_ALARM_ID = "alarm_id"
+            const val COLUMN_TIME_ID = "time_id"
+            const val COLUMN_GROUP_ID = "group_id"
+            const val COLUMN_IS_SNOOZE = "is_snooze"
+        }
     }
 }

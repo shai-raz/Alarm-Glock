@@ -17,7 +17,7 @@
             android:layout_height="wrap_content"
             tools:text="16:41"
             android:format24Hour="HH:mm"
-            android:textSize="54sp"
+            android:textSize="64sp"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="32dp"
             android:textColor="@color/alarmWhiteForeground"/>
@@ -30,32 +30,32 @@
             android:layout_below="@id/alarm_clock"
             android:layout_marginTop="16dp"
             tools:text="Morning"
-            android:textColor="@color/alarmWhiteForeground"/>
+            android:textColor="@color/alarmWhiteForeground"
+            android:textSize="24sp"/>
 
         <Button
+            style="@style/AlarmButton"
             android:id="@+id/alarm_dismiss_group_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:text="@string/alarm_dismiss_group"
-            android:padding="32dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginEnd="16dp"/>
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginEnd="8dp"/>
 
         <Button
+            style="@style/AlarmButton"
             android:id="@+id/alarm_snooze_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:text="@string/alarm_snooze"
-            android:padding="32dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginEnd="16dp"
-            android:alpha="0.3"/>
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginEnd="8dp" />
 
         <!-- Swipe up to dismiss layout -->
         <LinearLayout

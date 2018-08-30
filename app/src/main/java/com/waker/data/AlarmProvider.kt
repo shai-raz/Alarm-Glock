@@ -6,6 +6,7 @@ import android.content.ContentValues
 import android.content.UriMatcher
 import android.database.Cursor
 import android.net.Uri
+import com.waker.data.AlarmContract.AlarmEntry
 import com.waker.data.AlarmContract.AlarmGroupEntry
 import com.waker.data.AlarmContract.AlarmTimeEntry
 
@@ -14,6 +15,8 @@ private const val ALARM_GROUP = 100
 private const val ALARM_GROUP_ID = 101
 private const val ALARM_TIME = 200
 private const val ALARM_TIME_ID = 201
+private const val ALARM = 300
+private const val ALARM_ID = 301
 
 
 class AlarmProvider: ContentProvider() {
@@ -25,7 +28,9 @@ class AlarmProvider: ContentProvider() {
         sUriMatcher.addURI(AlarmContract.CONTENT_AUTHORITY, AlarmContract.PATH_ALARM_GROUP, ALARM_GROUP)
         sUriMatcher.addURI(AlarmContract.CONTENT_AUTHORITY, AlarmContract.PATH_ALARM_GROUP + "/#", ALARM_GROUP_ID)
         sUriMatcher.addURI(AlarmContract.CONTENT_AUTHORITY, AlarmContract.PATH_ALARM_TIME, ALARM_TIME)
-        sUriMatcher.addURI(AlarmContract.CONTENT_AUTHORITY, AlarmContract.PATH_ALARM_GROUP + "/#", ALARM_TIME_ID)
+        sUriMatcher.addURI(AlarmContract.CONTENT_AUTHORITY, AlarmContract.PATH_ALARM_TIME + "/#", ALARM_TIME_ID)
+        sUriMatcher.addURI(AlarmContract.CONTENT_AUTHORITY, AlarmContract.PATH_ALARM, ALARM)
+        sUriMatcher.addURI(AlarmContract.CONTENT_AUTHORITY, AlarmContract.PATH_ALARM + "/#", ALARM_ID)
     }
 
     override fun onCreate(): Boolean {
@@ -46,6 +51,7 @@ class AlarmProvider: ContentProvider() {
                         arrayOf(ContentUris.parseId(uri).toString()),
                         null, null, sortOrder)
             }
+
             ALARM_TIME -> db.query(AlarmTimeEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder)
             ALARM_TIME_ID -> {
                 db.query(AlarmTimeEntry.TABLE_NAME,
@@ -54,6 +60,16 @@ class AlarmProvider: ContentProvider() {
                         arrayOf(ContentUris.parseId(uri).toString()),
                         null, null, sortOrder)
             }
+
+            ALARM -> db.query(AlarmEntry.TABLE_NAME, projection, selection, selectionArgs, null, null, sortOrder)
+            ALARM_ID -> {
+                db.query(AlarmEntry.TABLE_NAME,
+                        projection,
+                        AlarmEntry.COLUMN_ID + "=?",
+                        arrayOf(ContentUris.parseId(uri).toString()),
+                        null, null, sortOrder)
+            }
+
             else -> throw IllegalArgumentException("Cannot query, unknown URI: $uri")
         }
 
@@ -68,6 +84,7 @@ class AlarmProvider: ContentProvider() {
         return when (match) {
             ALARM_GROUP -> insertToDb(uri, contentValues, AlarmGroupEntry.TABLE_NAME)
             ALARM_TIME -> insertToDb(uri, contentValues, AlarmTimeEntry.TABLE_NAME)
+            ALARM -> insertToDb(uri, contentValues, AlarmEntry.TABLE_NAME)
             else -> throw IllegalArgumentException("Cannot insert, unknown URI: $uri")
         }
     }
@@ -92,12 +109,21 @@ class AlarmProvider: ContentProvider() {
                     AlarmGroupEntry.COLUMN_ID + "=?",
                     arrayOf(ContentUris.parseId(uri).toString()),
                     AlarmGroupEntry.TABLE_NAME)
+
             ALARM_TIME -> updateDb(uri, contentValues, selection, selectionArgs, AlarmTimeEntry.TABLE_NAME)
             ALARM_TIME_ID -> updateDb(uri,
                     contentValues,
                     AlarmTimeEntry.COLUMN_ID + "=?",
                     arrayOf(ContentUris.parseId(uri).toString()),
                     AlarmTimeEntry.TABLE_NAME)
+
+            ALARM -> updateDb(uri, contentValues, selection, selectionArgs, AlarmEntry.TABLE_NAME)
+            ALARM_ID -> updateDb(uri,
+                    contentValues,
+                    AlarmEntry.COLUMN_ID + "=?",
+                    arrayOf(ContentUris.parseId(uri).toString()),
+                    AlarmEntry.TABLE_NAME)
+
             else -> throw IllegalArgumentException("Cannot insert, unknown URI: $uri")
         }
     }
@@ -122,6 +148,8 @@ class AlarmProvider: ContentProvider() {
             ALARM_GROUP_ID -> db.delete(AlarmGroupEntry.TABLE_NAME, AlarmGroupEntry.COLUMN_ID + "=?", arrayOf(ContentUris.parseId(uri).toString()))
             ALARM_TIME -> db.delete(AlarmTimeEntry.TABLE_NAME, selection, selectionArgs)
             ALARM_TIME_ID -> db.delete(AlarmTimeEntry.TABLE_NAME, AlarmTimeEntry.COLUMN_ID + "=?", arrayOf(ContentUris.parseId(uri).toString()))
+            ALARM -> db.delete(AlarmEntry.TABLE_NAME, selection, selectionArgs)
+            ALARM_ID -> db.delete(AlarmEntry.TABLE_NAME, AlarmEntry.COLUMN_ID + "=?", arrayOf(ContentUris.parseId(uri).toString()))
             else -> throw IllegalArgumentException("Cannot insert, unknown URI: $uri")
         }
 
@@ -137,6 +165,8 @@ class AlarmProvider: ContentProvider() {
             ALARM_GROUP_ID -> AlarmGroupEntry.CONTENT_ITEM_TYPE
             ALARM_TIME -> AlarmTimeEntry.CONTENT_LIST_TYPE
             ALARM_TIME_ID -> AlarmTimeEntry.CONTENT_ITEM_TYPE
+            ALARM -> AlarmEntry.CONTENT_LIST_TYPE
+            ALARM_ID -> AlarmEntry.CONTENT_ITEM_TYPE
             else -> throw IllegalArgumentException("Cannot insert, unknown URI: $uri")
         }
     }

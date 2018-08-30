@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.support.design.widget.FloatingActionButton
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.LoaderManager
@@ -16,6 +17,7 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.DividerItemDecoration
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.TextView
@@ -29,7 +31,7 @@ private const val MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 1
 
 class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> {
 
-    private val LOG_TAG = this.javaClass.simpleName!!
+    private val LOG_TAG = this.javaClass.simpleName
 
     private lateinit var mNextAlarmTextView: TextView
     private lateinit var mGroupsRecyclerView: RecyclerView
@@ -37,6 +39,9 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
     private lateinit var mFab: FloatingActionButton
     private lateinit var mGroupsAdapter: GroupsAdapter
 
+    private var mIsFirst = true
+    var mCountDownTimer: CountDownTimer? = null
+    fun cancelCountDownTimer() = mCountDownTimer?.cancel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,6 +102,11 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
         mFab.startAnimation(AnimationUtils.loadAnimation(this, R.anim.add_group_fab_show))
     }
 
+    override fun onPause() {
+        super.onPause()
+        cancelCountDownTimer()
+    }
+
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor> {
         val projection = arrayOf(
                 AlarmGroupEntry.COLUMN_ID,
@@ -105,6 +115,8 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
                 AlarmGroupEntry.COLUMN_SOUND,
                 AlarmGroupEntry.COLUMN_DAYS_IN_WEEK,
                 AlarmGroupEntry.COLUMN_SOUND)
+
+        Log.i(LOG_TAG, "LOADER: created")
 
         return CursorLoader(
                 this,
@@ -118,17 +130,19 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
     override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
         updateTimeTillNextAlarm(cursor)
         mGroupsAdapter.swapCursor(cursor)?.close()
+        Log.i(LOG_TAG, "LOADER: finished")
     }
 
     override fun onLoaderReset(loader: Loader<Cursor>) {
         mGroupsAdapter.swapCursor(null)?.close()
+        Log.i(LOG_TAG, "LOADER: reset")
     }
 
     /**
      * If there are no alarms set, sets the empty view as VISIBLE,
      * Otherwise, sets it to GONE
-     * @param cursor Cursor: The loaded cursor
-     * @return Returns `true` if the empty view has been set, `false` otherwise
+     * @param cursor the loaded cursor
+     * @return       `true` if the empty view has been set, `false` otherwise
      */
     private fun setEmptyView(cursor: Cursor?): Boolean {
         if (cursor == null || cursor.count == 0) {
@@ -143,13 +157,31 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
     /**
      * Updating time left until the next alarm.
      * If no alarms are set - sets an empty view.
-     * @param cursor Cursor: The loaded cursor
+     * @param cursor the loaded cursor
      */
     private fun updateTimeTillNextAlarm(cursor: Cursor?) {
         if (!setEmptyView(cursor)) {
-            val nextAlarm = AlarmUtils.getNextAlarmString(this)
             mNextAlarmTextView.visibility = View.VISIBLE
-            mNextAlarmTextView.text = nextAlarm
+
+            val nextAlarmDiff = AlarmUtils.getNextAlarmDiff(this)
+            if (nextAlarmDiff != null) {
+                mCountDownTimer = object : CountDownTimer(nextAlarmDiff, 1000) {
+                    override fun onTick(millisUntilFinished: Long) {
+                        mNextAlarmTextView.text = AlarmUtils.getNextAlarmString(this@MainActivity, millisUntilFinished)
+                    }
+
+                    override fun onFinish() {
+                        mNextAlarmTextView.text = "The alarm will go off any second!"
+                    }
+
+                }
+                mCountDownTimer!!.start()
+                /*val nextAlarm = AlarmUtils.getNextAlarmString(this)
+
+            mNextAlarmTextView.text = nextAlarm*/
+            } else {
+                mNextAlarmTextView.text = getString(R.string.main_no_active_alarms)
+            }
         } else {
             mNextAlarmTextView.visibility = View.GONE
         }

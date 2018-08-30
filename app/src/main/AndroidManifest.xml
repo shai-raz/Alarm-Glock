@@ -42,7 +42,10 @@
         </activity>
 
         <activity android:name=".AlarmActivity"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:launchMode="singleTask"
+
+            />
 
         <activity android:name=".RingtoneActivity" />
 
@@ -59,7 +62,13 @@
             android:name="com.waker.data.AlarmProvider"
             android:exported="false" />
 
-        <receiver android:name=".AlarmBroadcastReceiver"/>
+        <receiver android:name=".AlarmBroadcastReceiver"
+            android:process=":remote"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.waker"/>
+            </intent-filter>
+        </receiver>
 
     </application>
 

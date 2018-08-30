@@ -6,8 +6,8 @@
     <string name="main_next_alarm_in">"השעון מעורר הבא בעוד: "</string>
     <string name="main_in_days">%1$d ,&#160;</string>
     <string name="main_in_hours">%1$d שעות,&#160;</string>
-    <string name="main_in_minutes">%1$d דקות,&#160;</string>
-    <string name="main_in_seconds">%1$d שניות.</string>
+    <string name="main_in_minutes">%1$d דקות&#160;</string>
+    <string name="main_in_seconds">%1$d שניות</string>
     <string name="group_entry_everyday">כל יום</string>
     <string name="editor_alarm_name">שם</string>
     <string name="editor_sound">צלצול</string>
@@ -40,4 +40,5 @@
     <string name="description_sound_is_on">קול דלוק</string>
     <string name="description_sound_is_off">קול כבוי</string>
     <string name="editor_time_removed">נמחק</string>
+    <string name="editor_you_must_have_at_least_one_time_set">חייב לקבוע לפחות זמן אחד!</string>
 </resources>

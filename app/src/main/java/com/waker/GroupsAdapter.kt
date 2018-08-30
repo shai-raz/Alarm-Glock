@@ -23,7 +23,7 @@ import kotlinx.android.synthetic.main.group_time_entry.view.*
 class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor: Cursor?):
         RecyclerView.Adapter<GroupsAdapter.ViewHolder>() {
 
-    private val LOG_TAG = this.javaClass.simpleName!!
+    private val LOG_TAG = this.javaClass.simpleName
 
     private val selectedItems = ArrayList<Int>()
     private var mMultiSelect = false
@@ -153,6 +153,7 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
 
             groupSwitch.setOnCheckedChangeListener { button, isChecked ->
                 if (button.isPressed) {
+                    (mContext as MainActivity).cancelCountDownTimer()
                     //isTouched = false
                     val values = ContentValues()
                     values.put(AlarmGroupEntry.COLUMN_ACTIVE, isChecked)
