@@ -10,6 +10,7 @@ import android.support.v7.view.ActionMode
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.SwitchCompat
+import android.util.Log
 import android.view.*
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -104,20 +105,23 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
                 val groupFirstTime = groupTimes.getInt(groupTimes.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
                 groupFirstTimeTextView.text = AlarmUtils.minutesInDayTo24(groupFirstTime)
             }
+            Log.i(LOG_TAG, "update() ${groupTimes.count}")
             if (groupTimes.count != 1) {
                 if (groupTimes.moveToLast()) {
+                    groupLastTimeLayout.visibility = View.VISIBLE
+                    groupTilda.visibility = View.VISIBLE
+                    groupExpandableRecyclerView.visibility = if(isExpanded) View.VISIBLE else View.GONE
+
                     val groupEndTime = groupTimes.getInt(groupTimes.getColumnIndex(AlarmTimeEntry.COLUMN_TIME))
                     groupLastTimeTextView.text = AlarmUtils.minutesInDayTo24(groupEndTime)
                     groupExpandButton.setImageResource(if(isExpanded) R.drawable.ic_expand_less else R.drawable.ic_expand_more)
-                    groupExpandableRecyclerView.visibility = if(isExpanded) View.VISIBLE else View.GONE
+
                     groupExpandableRecyclerView.layoutManager = LinearLayoutManager(mContext, LinearLayoutManager.VERTICAL, false)
                     groupExpandableRecyclerView.adapter = TimesAdapter(mContext, groupTimes)
                 }
             } else {
                 groupLastTimeLayout.visibility = View.GONE
                 groupTilda.visibility = View.GONE
-                //groupFirstTextView.visibility = View.GONE
-                //groupExpandButton.visibility = View.INVISIBLE
                 groupExpandButton.setImageResource(R.drawable.ic_alarm_black)
                 groupExpandButton.setBackgroundResource(0)
                 groupExpandableRecyclerView.visibility = View.GONE
@@ -153,7 +157,6 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
 
             groupSwitch.setOnCheckedChangeListener { button, isChecked ->
                 if (button.isPressed) {
-                    (mContext as MainActivity).cancelCountDownTimer()
                     //isTouched = false
                     val values = ContentValues()
                     values.put(AlarmGroupEntry.COLUMN_ACTIVE, isChecked)

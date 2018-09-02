@@ -40,8 +40,7 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
     private lateinit var mGroupsAdapter: GroupsAdapter
 
     private var mIsFirst = true
-    var mCountDownTimer: CountDownTimer? = null
-    fun cancelCountDownTimer() = mCountDownTimer?.cancel()
+    private var mCountDownTimer: CountDownTimer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,11 +101,6 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
         mFab.startAnimation(AnimationUtils.loadAnimation(this, R.anim.add_group_fab_show))
     }
 
-    override fun onPause() {
-        super.onPause()
-        cancelCountDownTimer()
-    }
-
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor> {
         val projection = arrayOf(
                 AlarmGroupEntry.COLUMN_ID,
@@ -160,6 +154,7 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
      * @param cursor the loaded cursor
      */
     private fun updateTimeTillNextAlarm(cursor: Cursor?) {
+        mCountDownTimer?.cancel()
         if (!setEmptyView(cursor)) {
             mNextAlarmTextView.visibility = View.VISIBLE
 
@@ -171,14 +166,12 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<Cursor> 
                     }
 
                     override fun onFinish() {
-                        mNextAlarmTextView.text = "The alarm will go off any second!"
+                        mNextAlarmTextView.text = getString(R.string.main_alarm_will_go_off_any_second)
                     }
 
                 }
                 mCountDownTimer!!.start()
-                /*val nextAlarm = AlarmUtils.getNextAlarmString(this)
 
-            mNextAlarmTextView.text = nextAlarm*/
             } else {
                 mNextAlarmTextView.text = getString(R.string.main_no_active_alarms)
             }

@@ -4,6 +4,7 @@
     <!-- Main -->
     <string name="main_no_active_alarms">No active alarms.</string>
     <string name="main_no_alarms_are_set">No alarms are set!</string>
+    <string name="main_alarm_will_go_off_any_second">The alarm will go off any second!</string>
     <string name="main_next_alarm_in">Next alarm in:\n</string>
     <string name="main_in_days">%1$d days,&#160;</string>
     <string name="main_in_hours">%1$d hours,&#160;</string>

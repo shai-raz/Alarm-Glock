@@ -3,7 +3,7 @@
     <string name="app_name">Waker</string>
     <string name="main_no_active_alarms">אין שעונים פעילים.</string>
     <string name="main_no_alarms_are_set">עדיין לא הוספת שעונים!</string>
-    <string name="main_next_alarm_in">"השעון מעורר הבא בעוד: "</string>
+    <string name="main_next_alarm_in">השעון מעורר הבא בעוד:\n</string>
     <string name="main_in_days">%1$d ,&#160;</string>
     <string name="main_in_hours">%1$d שעות,&#160;</string>
     <string name="main_in_minutes">%1$d דקות&#160;</string>
@@ -41,4 +41,5 @@
     <string name="description_sound_is_off">קול כבוי</string>
     <string name="editor_time_removed">נמחק</string>
     <string name="editor_you_must_have_at_least_one_time_set">חייב לקבוע לפחות זמן אחד!</string>
+    <string name="main_alarm_will_go_off_any_second">השעון מעורר יצלצל עוד רגע!</string>
 </resources>
