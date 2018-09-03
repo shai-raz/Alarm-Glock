@@ -186,7 +186,7 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
                 true
             }
 
-            itemView.setOnClickListener { view ->
+            itemView.setOnClickListener { _ ->
                 if (!mMultiSelect) { // If ActionMode is off
                     val intent = Intent(mContext, AlarmEditorActivity::class.java)
                     intent.putExtra("groupId", groupId)

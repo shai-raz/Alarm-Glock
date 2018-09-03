@@ -16,4 +16,9 @@
     <color name="toggleBackground">#cccccc</color>
 
     <color name="alarmWhiteForeground">#9affffff</color>
+
+    <color name="daysInWeekSelectedBackground">@color/colorAccent</color>
+    <color name="daysInWeekNotSelectedBackground">@android:color/transparent</color>
+    <color name="daysInWeekSelectedText">@android:color/white</color>
+    <color name="daysInWeekNotSelectedText">#292929</color>
 </resources>

@@ -31,6 +31,8 @@ import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import android.widget.*
 import cn.pedant.SweetAlert.SweetAlertDialog
+import com.touchboarder.weekdaysbuttons.WeekdaysDataItem
+import com.touchboarder.weekdaysbuttons.WeekdaysDataSource
 import com.waker.data.AlarmContract
 import com.waker.data.AlarmContract.AlarmGroupEntry
 import com.waker.data.AlarmContract.AlarmTimeEntry
@@ -60,6 +62,7 @@ class AlarmEditorActivity: AppCompatActivity() {
     private lateinit var mFABCoordinator: CoordinatorLayout
     private lateinit var mAddTimeButton: FloatingActionButton
     //private lateinit var mAddGroupTimeButton: FloatingActionButton
+    private lateinit var mDaysOfWeekDataSource: WeekdaysDataSource
 
     private lateinit var mAlarmManager: AlarmManager
     private lateinit var mLayoutManager: LinearLayoutManager
@@ -67,6 +70,7 @@ class AlarmEditorActivity: AppCompatActivity() {
 
     private var mEditMode = false
     private var mTimesList = mutableListOf<Int>()
+    private var mDaysOfWeek = mutableListOf(0, 0, 0, 0, 0, 0, 0)
     private var mGroupId: Int = 0
 
     private var ringtoneUri: Uri? = Uri.EMPTY
@@ -97,19 +101,43 @@ class AlarmEditorActivity: AppCompatActivity() {
 
         //Log.i(LOG_TAG, "getRingtone: ${getRingtone()}")
 
+        mDaysOfWeekDataSource = WeekdaysDataSource(this, R.id.editor_days_in_week_view_stub)
+                .setFirstDayOfWeek(Calendar.SUNDAY)
+                .setUnselectedColorRes(R.color.daysInWeekNotSelectedBackground)
+                .setSelectedColorRes(R.color.daysInWeekSelectedBackground)
+                //.setTextColorSelectedRes(R.color.daysInWeekSelectedText)
+                .setTextColorUnselectedRes(R.color.daysInWeekNotSelectedText)
+                //.setFontBaseSize(R.dimen.editor_days_in_week_text_size)*/
+                .setFillWidth(true)
+                .setNumberOfLetters(1)
+                .start(object: WeekdaysDataSource.Callback {
+                    override fun onWeekdaysSelected(attachId: Int, items: ArrayList<WeekdaysDataItem>) {
+                        // Do something if today is selected?
+                        Log.i(LOG_TAG, "DataSource: onWeekdaysSelected() $attachId $items")
+                    }
+
+                    override fun onWeekdaysItemClicked(attachId: Int, item: WeekdaysDataItem) {
+                        //Filter on the attached id if there is multiple weekdays data sources
+                        Log.i(LOG_TAG, "DataSource: onWeekdaysItemClicked() ${item.calendarDayId}")
+                        val dayClicked = item.calendarDayId - 1
+                        mDaysOfWeek[dayClicked] = item.isSelected.toInt()
+                    }
+
+                })
+
         mSoundSwitch.setOnClickListener {
             if (!mSoundSwitch.isEnabled) {
                 Toast.makeText(this, "Please choose a ringtone first!", Toast.LENGTH_SHORT).show()
             }
         }
 
-        mDaysOfWeekToggle = arrayOf(editor_toggle_sunday,
+        /*mDaysOfWeekToggle = arrayOf(editor_toggle_sunday,
                 editor_toggle_monday,
                 editor_toggle_tuesday,
                 editor_toggle_wednesday,
                 editor_toggle_thursday,
                 editor_toggle_friday,
-                editor_toggle_saturday)
+                editor_toggle_saturday)*/
 
         mAddTimeButton.setOnClickListener {
             addTime()
@@ -123,7 +151,7 @@ class AlarmEditorActivity: AppCompatActivity() {
             finish()
         }
 
-        mPickRingtoneButton.setOnClickListener {
+        mPickRingtoneButton.setOnClickListener { _ ->
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) { // Check for storage permissions
                 val dialog = SweetAlertDialog(this, SweetAlertDialog.NORMAL_TYPE)
@@ -236,8 +264,8 @@ class AlarmEditorActivity: AppCompatActivity() {
 
             populateExistingAlarm(groupCursor, timesCursor)
 
-            groupCursor.close()
-            timesCursor.close()
+            groupCursor?.close()
+            timesCursor?.close()
         } else {
             addTime()
         }
@@ -309,11 +337,21 @@ class AlarmEditorActivity: AppCompatActivity() {
             daysOfWeek = daysOfWeek.replace("[","")
             daysOfWeek = daysOfWeek.replace("]","")
             daysOfWeek = daysOfWeek.replace("\\s+","")
-            val daysOfWeekArray = daysOfWeek.split(",")
+            val daysOfWeekArray = daysOfWeek.split(",").toTypedArray()
+            mDaysOfWeek = IntArray(daysOfWeekArray.size) { daysOfWeekArray[it].trim().toInt() }.toMutableList()
 
-            for (i in 0 until mDaysOfWeekToggle.size) {
+            /*for (i in 0 until mDaysOfWeekToggle.size) {
                 mDaysOfWeekToggle[i].isChecked = daysOfWeekArray[i].trim().toInt() == 1
+            }*/
+
+            // set the chosen days in week
+            val selectedDays: MutableList<Int> = mutableListOf()
+            for (i in 0..6) {
+                if (mDaysOfWeek[i] == 1) {
+                    selectedDays.add(i)
+                }
             }
+            mDaysOfWeekDataSource.setSelectedDays(*selectedDays.toIntArray())
 
             if (ringtoneUri != Uri.EMPTY) {
                 mSoundSwitch.isEnabled = true
@@ -380,11 +418,11 @@ class AlarmEditorActivity: AppCompatActivity() {
                 groupValues.put(AlarmGroupEntry.COLUMN_SOUND, isSound)
                 groupValues.put(AlarmGroupEntry.COLUMN_RINGTONE_URI, ringtoneUri.toString())
 
-                val daysOfWeek: MutableList<Int> = mutableListOf()
+                /*val daysOfWeek: MutableList<Int> = mutableListOf()
                 for (i in 0 until mDaysOfWeekToggle.size) {
                     daysOfWeek.add(i, mDaysOfWeekToggle[i].isChecked.toInt())
-                }
-                groupValues.put(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK, daysOfWeek.toString())
+                }*/
+                groupValues.put(AlarmGroupEntry.COLUMN_DAYS_IN_WEEK, mDaysOfWeek.toString())
                 groupValues.put(AlarmGroupEntry.COLUMN_VIBRATE, isVibrate.toInt())
                 groupValues.put(AlarmGroupEntry.COLUMN_VOLUME, volume)
                 groupValues.put(AlarmGroupEntry.COLUMN_SNOOZE_DURATION, snoozeDuration)
@@ -413,7 +451,7 @@ class AlarmEditorActivity: AppCompatActivity() {
                         timeId = ContentUris.parseId(timeUri).toInt()
                         timesValues.clear()
 
-                        AlarmUtils.setAlarm(this, time, timeId, groupId, daysOfWeek, mAlarmManager)
+                        AlarmUtils.setAlarm(this, time, timeId, groupId, mDaysOfWeek, mAlarmManager)
 
                         if (timeUri == null) {
                             // If the new content URI is null, then there was an error with insertion.
@@ -449,7 +487,7 @@ class AlarmEditorActivity: AppCompatActivity() {
                         timeId = ContentUris.parseId(timeUri).toInt()
                         timesValues.clear()
 
-                        AlarmUtils.setAlarm(this, time, timeId, mGroupId, daysOfWeek, mAlarmManager)
+                        AlarmUtils.setAlarm(this, time, timeId, mGroupId, mDaysOfWeek, mAlarmManager)
 
                         if (timeUri == null) {
                             // If the new content URI is null, then there was an error with insertion.

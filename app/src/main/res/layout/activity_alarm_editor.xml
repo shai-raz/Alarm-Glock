@@ -130,19 +130,19 @@
 
         <View style="@style/dividerHorizontal" />
 
+
+        <ViewStub
+            android:id="@+id/editor_days_in_week_view_stub"
+            android:layout_width="match_parent"
+            android:layout_height="?actionBarSize"
+            android:layout_marginTop="8dp" />
+
+
         <!-- Days in week -->
-        <LinearLayout
+        <!--<LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/editor_settings_layout_margin">
-
-            <!--<com.waker.data.SquareToggleButton
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textOff="@string/editor_toggle_sunday"
-                android:textOn="@string/editor_toggle_sunday"
-                android:background="@drawable/round_toggle_button"/>-->
 
             <ToggleButton
                 android:id="@+id/editor_toggle_sunday"
@@ -185,7 +185,7 @@
                 style="@style/DayInWeekToggleButton"
                 android:textOff="@string/editor_toggle_saturday"
                 android:textOn="@string/editor_toggle_saturday" />
-        </LinearLayout>
+        </LinearLayout>-->
 
         <Button
             android:id="@+id/editor_advanced_settings_button"

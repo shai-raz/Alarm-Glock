@@ -22,7 +22,7 @@ import kotlinx.android.synthetic.main.activity_advanced_settings.*
 
 class AdvancedSettingsActivity: AppCompatActivity() {
 
-    private val LOG_TAG = this.javaClass.simpleName!!
+    private val LOG_TAG = this.javaClass.simpleName
 
     private lateinit var mRelativeLayout: RelativeLayout
     private lateinit var mVibrateSwitch: SwitchCompat
