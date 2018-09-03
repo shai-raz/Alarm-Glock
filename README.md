@@ -13,13 +13,14 @@ Get the app on play store:<br />
 
 * [Sweet Alert Dialog](https://jitpack.io/p/Leogiroux/sweet-alert-dialog)
 * [Material Ripple](https://github.com/balysv/material-ripple)
+* [Weekdays Buttons Bar](https://github.com/TouchBoarder/weekdays-buttons-bar)
 
 ## Let me know
 
-If you wanna ask a question, or let me know about a bug you found,<br />
-or an improvment you might want me to add,<br />
+If you wanna ask a question, let me know about a bug you found,<br />
+or a feature you might want me to add,<br />
 feel free to mail me @ shayy9999@gmail.com
 
-## Acknowledgments
+## Thanks to
 
-* Idea by Moshe Nagar
+* Moshe Nagar: Idea, 10/10 Q&A
