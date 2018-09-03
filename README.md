@@ -1,8 +1,8 @@
 # Waker
 An alarm clock android app that let's you have your alarm times organized inside groups and then activated together.
 
-Get the app on play store **(Not available yet)**:<br />
-[![Download on Play Store](https://play.google.com/intl/en_us/badges/images/badge_new.png)](http://play.google.com)
+Get the app on play store:<br />
+[![Download on Play Store](https://play.google.com/intl/en_us/badges/images/badge_new.png)](https://play.google.com/store/apps/details?id=com.waker)
 
 ## Built Using
 
