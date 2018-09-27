@@ -313,13 +313,13 @@ class GroupsAdapter(private val mContext: AppCompatActivity, private var mCursor
     }
 
     private fun daysOfWeekToString(daysOfWeek: List<Int>): String {
-        val x: Map<Int, String> = mapOf(0 to "Sun",
-                1 to "Mon",
-                2 to "Tue",
-                3 to "Wed",
-                4 to "Thu",
-                5 to "Fri",
-                6 to "Sat")
+        val x: Map<Int, String> = mapOf(0 to mContext.getString(R.string.group_entry_day_sun),
+                1 to mContext.getString(R.string.group_entry_shortday_mon),
+                2 to mContext.getString(R.string.group_entry_shortday_tue),
+                3 to mContext.getString(R.string.group_entry_shortday_wed),
+                4 to mContext.getString(R.string.group_entry_shortday_thu),
+                5 to mContext.getString(R.string.group_entry_shortday_fri),
+                6 to mContext.getString(R.string.group_entry_shortday_sat))
 
         var string = ""
         if (daysOfWeek.contains(0)) {

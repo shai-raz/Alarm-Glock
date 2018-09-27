@@ -11,6 +11,13 @@
     <string name="main_in_minutes">%1$d minutes&#160;</string>
     <string name="main_in_seconds">%1$d seconds</string>
     <string name="group_entry_everyday">Everyday</string>
+    <string name="group_entry_day_sun">Sun</string>
+    <string name="group_entry_shortday_mon">Mon</string>
+    <string name="group_entry_shortday_tue">Tue</string>
+    <string name="group_entry_shortday_wed">Wed</string>
+    <string name="group_entry_shortday_thu">Thu</string>
+    <string name="group_entry_shortday_fri">Fri</string>
+    <string name="group_entry_shortday_sat">Sat</string>
 
     <!-- Editor -->
     <string name="editor_alarm_name">Alarm Name</string>

@@ -35,11 +35,13 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.1.2'
     implementation 'com.balysv:material-ripple:1.0.2'
     implementation 'com.github.f0ris.sweetalert:library:1.5.1'
-    implementation 'com.github.TouchBoarder:weekdays-buttons-bar:v1.0.2'
+    //implementation 'com.github.TouchBoarder:weekdays-buttons-bar:v1.0.2'
     implementation 'com.github.travijuu:numberpicker:1.0.7'
     implementation 'com.facebook.stetho:stetho:1.5.0'
     implementation 'com.facebook.stetho:stetho-js-rhino:1.4.2'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation project(":libs:WeekdaysButtonBar")
 }
